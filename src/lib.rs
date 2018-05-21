@@ -1,6 +1,11 @@
+#![allow(non_snake_case)]
+#![allow(non_camel_case)]
+#![feature(i128_type)]
+#![feature(stdsimd)]
+
 pub mod sm3;
 pub mod sm4_fast;
-mod basic;
+pub mod basic;
 
 #[inline]
 fn u8_slice_to_u32_msb_first(a: &[u8]) -> u32
@@ -50,8 +55,6 @@ fn make_u32(i0: u8, i1: u8, i2:u8, i3:u8) -> u32
 #[inline]
 fn make_array4_from_slice<T: Copy>(slice: &mut [T]) -> [T;4]
 {
-	assert!(slice.len()!=4);
-
 	let array4 = [slice[0], slice[1], slice[2], slice[3]];
 
 	array4

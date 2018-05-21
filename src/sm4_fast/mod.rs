@@ -297,6 +297,12 @@ fn SM4_T(b: u32) -> u32
 	Sbox_T[get_byte_u32(b,0) as usize] ^ (Sbox_T8[get_byte_u32(b,1) as usize]) ^ (Sbox_T16[get_byte_u32(b,2) as usize]) ^ (Sbox_T24[get_byte_u32(b,3) as usize])
 }
 
+// TODO: change inline to macros!
+/*macro_rules! SM4_T {
+	($b:ident) => (Sbox_T[get_byte_u32(b,0) as usize] ^ (Sbox_T8[get_byte_u32(b,1) as usize]) ^ (Sbox_T16[get_byte_u32(b,2) as usize]) ^ (Sbox_T24[get_byte_u32(b,3) as usize]))
+}*/
+
+// TODO: CHANGE inline to macros!
 #[inline]
 fn SM4_Tp(b: u32) -> u32
 {
@@ -314,16 +320,16 @@ macro_rules! SM4_RNDS {
   	)
 } 
 
-pub struct SM4_Crytor
+pub struct SM4_Cryptor
 {
 	Mk: [u8;16],
 	Rk: [u32;32],
 	hasRkGenerated: bool,
 }
 
-impl SM4_Crytor
+impl SM4_Cryptor
 {
-	pub fn new(key: &[u8;16]) -> SM4_Crytor
+	pub fn new(key: &[u8;16]) -> SM4_Cryptor
 	{
 		let mut newKey: [u8;16] = [0;16];
 		for i in 0..SM4_KEY_SIZE
@@ -331,7 +337,7 @@ impl SM4_Crytor
 			newKey[i] = key[i];
 		}
 
-		SM4_Crytor 
+		SM4_Cryptor 
 		{
 			Mk: newKey,
 			Rk: [0;32],
@@ -350,7 +356,7 @@ impl SM4_Crytor
 		}
 	}*/
 
-	fn generate_round_key(&mut self)
+	pub fn generate_round_key(&mut self)
 	{
 		self.hasRkGenerated = true;
 
@@ -376,6 +382,7 @@ impl SM4_Crytor
 
 		let mut ciphertext: [u32;4] = [0;4];
 
+		// TODO: modify here to adapt macros!
 		SM4_RNDS!( 0,  1,  2,  3, SM4_T, B0, B1, B2, B3, self, Rk);
 		SM4_RNDS!( 4,  5,  6,  7, SM4_T, B0, B1, B2, B3, self, Rk);
 		SM4_RNDS!( 8,  9, 10, 11, SM4_T, B0, B1, B2, B3, self, Rk);
@@ -402,6 +409,7 @@ impl SM4_Crytor
 
 		let mut plaintext:[u32;4] = [0;4];
 
+		// TODO: modify here to adapt macros!
 		SM4_RNDS!(31, 30, 29, 28, SM4_T, B0, B1, B2, B3, self, Rk);
 		SM4_RNDS!(27, 26, 25, 24, SM4_T, B0, B1, B2, B3, self, Rk);
 		SM4_RNDS!(23, 22, 21, 20, SM4_T, B0, B1, B2, B3, self, Rk);
