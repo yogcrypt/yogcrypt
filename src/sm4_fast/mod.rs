@@ -284,39 +284,26 @@ static Sbox_T24: [u32;256] =
 0xd45f5f8b, 0xc82f2fe7, 0x39e4e4dd, 0x49212168,
 ];
 
-/*#[inline]
-fn load_u32_byte(x: u32, off: usize)
-{
-	x += off * 4;
-	let mut out: u32 = 0;
-}*/
 
-#[inline]
-fn SM4_T(b: u32) -> u32
-{
-	Sbox_T[get_byte_u32(b,0) as usize] ^ (Sbox_T8[get_byte_u32(b,1) as usize]) ^ (Sbox_T16[get_byte_u32(b,2) as usize]) ^ (Sbox_T24[get_byte_u32(b,3) as usize])
+macro_rules! SM4_T {
+	($b:expr) => (Sbox_T[get_byte_u32($b,0) as usize] ^ (Sbox_T8[get_byte_u32($b,1) as usize]) ^ (Sbox_T16[get_byte_u32($b,2) as usize]) ^ (Sbox_T24[get_byte_u32($b,3) as usize]))
 }
 
-// TODO: change inline to macros!
-/*macro_rules! SM4_T {
-	($b:ident) => (Sbox_T[get_byte_u32(b,0) as usize] ^ (Sbox_T8[get_byte_u32(b,1) as usize]) ^ (Sbox_T16[get_byte_u32(b,2) as usize]) ^ (Sbox_T24[get_byte_u32(b,3) as usize]))
-}*/
+macro_rules! SM4_TP {
+	($b:expr) => 
+	{{
+		let t: u32 = make_u32(Sbox[get_byte_u32($b,0) as usize],Sbox[get_byte_u32($b,1) as usize],Sbox[get_byte_u32($b,2) as usize],Sbox[get_byte_u32($b,3) as usize]);
 
-// TODO: CHANGE inline to macros!
-#[inline]
-fn SM4_Tp(b: u32) -> u32
-{
-	let t: u32 = make_u32(Sbox[get_byte_u32(b,0) as usize],Sbox[get_byte_u32(b,1) as usize],Sbox[get_byte_u32(b,2) as usize],Sbox[get_byte_u32(b,3) as usize]);
-
-	t ^ t.rotate_left(13) ^ t.rotate_left(23)
+		t ^ t.rotate_left(13) ^ t.rotate_left(23)
+	}}
 }
 
 macro_rules! SM4_RNDS { 
-	($k0:expr,$k1:expr,$k2:expr,$k3:expr,$F:ident,$B0:ident,$B1:ident,$B2:ident,$B3:ident,$self_:ident,$Rk:ident) => (
-	$B0 ^= $F($B1 ^ $B2 ^ $B3 ^ $self_.$Rk[$k0]);
-  	$B1 ^= $F($B0 ^ $B2 ^ $B3 ^ $self_.$Rk[$k1]);
-  	$B2 ^= $F($B0 ^ $B1 ^ $B3 ^ $self_.$Rk[$k2]);
-  	$B3 ^= $F($B0 ^ $B1 ^ $B2 ^ $self_.$Rk[$k3]);
+	($k0:expr,$k1:expr,$k2:expr,$k3:expr,$B0:ident,$B1:ident,$B2:ident,$B3:ident,$self_:ident,$Rk:ident) => (
+	$B0 ^= SM4_T!($B1 ^ $B2 ^ $B3 ^ $self_.$Rk[$k0]);
+  	$B1 ^= SM4_T!($B0 ^ $B2 ^ $B3 ^ $self_.$Rk[$k1]);
+  	$B2 ^= SM4_T!($B0 ^ $B1 ^ $B3 ^ $self_.$Rk[$k2]);
+  	$B3 ^= SM4_T!($B0 ^ $B1 ^ $B2 ^ $self_.$Rk[$k3]);
   	)
 } 
 
@@ -345,17 +332,6 @@ impl SM4_Cryptor
 		}
 	}
 
-	//test
-/*	pub fn output_information(&mut self)
-	{
-		self.generate_round_key();
-
-		for i in 0..32
-		{
-			println!("{:#X}", self.Rk[i]);
-		}
-	}*/
-
 	pub fn generate_round_key(&mut self)
 	{
 		self.hasRkGenerated = true;
@@ -368,7 +344,7 @@ impl SM4_Cryptor
 
 		for i in 0..32
 		{
-			K[i%4] ^= SM4_Tp(K[(i+1)%4] ^ K[(i+2)%4] ^ K[(i+3)%4] ^ CK[i]);
+			K[i%4] ^= SM4_TP!(K[(i+1)%4] ^ K[(i+2)%4] ^ K[(i+3)%4] ^ CK[i]);
 			self.Rk[i] = K[i % 4];
 		}
 	}
@@ -382,15 +358,14 @@ impl SM4_Cryptor
 
 		let mut ciphertext: [u32;4] = [0;4];
 
-		// TODO: modify here to adapt macros!
-		SM4_RNDS!( 0,  1,  2,  3, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 4,  5,  6,  7, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 8,  9, 10, 11, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(12, 13, 14, 15, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(16, 17, 18, 19, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(20, 21, 22, 23, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(24, 25, 26, 27, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(28, 29, 30, 31, SM4_T, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!( 0,  1,  2,  3, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!( 4,  5,  6,  7, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!( 8,  9, 10, 11, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(12, 13, 14, 15, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(16, 17, 18, 19, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(20, 21, 22, 23, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(24, 25, 26, 27, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(28, 29, 30, 31, B0, B1, B2, B3, self, Rk);
 
 		ciphertext[0] = B3;
 		ciphertext[1] = B2;
@@ -409,15 +384,14 @@ impl SM4_Cryptor
 
 		let mut plaintext:[u32;4] = [0;4];
 
-		// TODO: modify here to adapt macros!
-		SM4_RNDS!(31, 30, 29, 28, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(27, 26, 25, 24, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(23, 22, 21, 20, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(19, 18, 17, 16, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(15, 14, 13, 12, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(11, 10,  9,  8, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 7,  6,  5,  4, SM4_T, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 3,  2,  1,  0, SM4_T, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(31, 30, 29, 28, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(27, 26, 25, 24, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(23, 22, 21, 20, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(19, 18, 17, 16, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(15, 14, 13, 12, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!(11, 10,  9,  8, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!( 7,  6,  5,  4, B0, B1, B2, B3, self, Rk);
+		SM4_RNDS!( 3,  2,  1,  0, B0, B1, B2, B3, self, Rk);
 
 		plaintext[0] = B3;
 		plaintext[1] = B2;

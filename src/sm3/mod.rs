@@ -80,29 +80,6 @@ fn SM3_CF(Vi: [u32;8], Bi: [u32;16]) -> [u32;8]
 	let W = Ws.0;
 	let W_p = Ws.1;
 
-	// TEST
-	// for i in 0..68
-	// {
-	// 	if i%8==0
-	// 	{
-	// 		println!();
-	// 	}
-	// 	print!("{:08X} ", W[i]);
-	// }
-	// println!();
-	// for i in 0..64
-	// {
-	// 	if i%8==0
-	// 	{
-	// 		println!();
-	// 	}
-	// 	print!("{:08X}  ", W_p[i]);
-
-	// }
-	// println!();
-	// println!();
-	
-
 	let mut A = Vi[0];
 	let mut B = Vi[1];
 	let mut C = Vi[2];
@@ -119,7 +96,6 @@ fn SM3_CF(Vi: [u32;8], Bi: [u32;16]) -> [u32;8]
 
 	for j in 0..64
 	{
-		//println!("{:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} ", A, B, C, D, E, F, G, H);
 		SS1 = (Wrapping(A.rotate_left(12))+Wrapping(E)+Wrapping(SM3_T(j).rotate_left(j%32))).0.rotate_left(7);
 		SS2 = SS1 ^ (A.rotate_left(12));
 		TT1 = (Wrapping(SM3_FF(A,B,C,j))+Wrapping(D)+Wrapping(SS2)+Wrapping(W_p[j as usize])).0;
@@ -167,29 +143,6 @@ impl Sm3Cryptor
 		}
 	}
 
-/*	fn msgFiller(msg: &[u32], primLen: u64) -> Vec<u32>
-	{
-		let mut msgLen = primLen;
-		msgLen += 1;
-
-		let mut addBlock = false;
-		if msgLen%512>448 // too long
-		{
-			msgLen += (msgLen%512)+512;
-			addBlock = true;
-		}
-		else 
-		{
-			msgLen += msgLen%512;
-		}
-
-		let byteAdd = 
-
-		let mut msgVec: Vec<u32> = Vec::new();
-
-		msgVec
-	}*/
-
 	pub fn encrypt(&self, msg: &[u32], primLen: usize) -> [u32;8]
 	{
 		let mut msgLen = primLen;
@@ -206,10 +159,6 @@ impl Sm3Cryptor
 
 		let msgLen1: u32 = (primLen/0x0000_0001_0000_0000) as u32;
 		let msgLen2: u32 = (primLen%0x0000_0001_0000_0000) as u32;
-
-		// println!("lent = {}", primLen);
-		// println!("len1 = {}", msgLen1);
-		// println!("len2 = {}", msgLen2);
 
 		// set V to IV
 		let mut V: [u32;8] = [0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e];
@@ -228,7 +177,7 @@ impl Sm3Cryptor
 				}
 			}
 
-			if primLen+1>512*i&&primLen+1<=512*(i+1) // we need to add "1" somewhere in this block
+			if primLen+1>512*i&&primLen+1<=512*(i+1) // add "1" somewhere in this block
 			{
 				let mut bias = primLen % 512;
 
@@ -243,27 +192,9 @@ impl Sm3Cryptor
 				B[15] = msgLen2;
 			}
 
-			// TEST
-			// for j in 0..16
-			// {
-			// 	print!("{:08X} ", B[j]);
-			// }
-
-			// TEST
-			// println!();
-			// println!();
-
 			V = SM3_CF(V, B);
 
 		}
-
-		//TEST
-		// println!("the result: ");
-		// for k in 0..8
-		// {
-		// 	print!("{:08X} ", V[k]);
-		// }
-		// println!();
 
 		V
 	}
