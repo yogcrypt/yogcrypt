@@ -3,6 +3,7 @@
 #![feature(i128_type)]
 #![feature(stdsimd)]
 
+pub mod sm2;
 pub mod sm3;
 pub mod sm4_fast;
 pub mod basic;
