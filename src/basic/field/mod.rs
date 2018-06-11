@@ -4,14 +4,22 @@ pub mod power2_field;
 use ::basic::cell::yU64x4::*;
 use std::option;
 
-trait Field
+pub trait theField
 {
-	fn getNewElement(&self, x: yU64x4) -> yU64x4;
-	fn getNewRandomElement(&self) -> yU64x4;
-	fn getAdditionInverseElement(&self, p: yU64x4) -> yU64x4;
-	fn getMultiplicationInverseElement(&self, p: yU64x4) -> Option<yU64x4>;
-	fn addElement(&self, p: yU64x4, q: yU64x4) -> yU64x4;
-	fn subElement(&self, p: yU64x4, q: yU64x4) -> yU64x4;
-	fn mulElement(&self, p: yU64x4, q: yU64x4) -> yU64x4;
-	fn divElement(&self, p: yU64x4, q: yU64x4) -> Option<yU64x4>;
+	fn getAdditionInverseElement(&self, x: yU64x4) -> yU64x4;
+	fn getMultiplicationInverseElement(&self, x: yU64x4) -> yU64x4;
+	fn addElement(&self, x: yU64x4, y: yU64x4) -> yU64x4;
+	fn subElement(&self, x: yU64x4, y: yU64x4) -> yU64x4;
+	fn mulElement(&self, x: yU64x4, y: yU64x4) -> yU64x4;
+	fn divElement(&self, x: yU64x4, y: yU64x4) -> yU64x4;
+}
+
+trait Field<T: Copy>
+{
+	fn getAdditionInverseElement(&self) -> T;
+	fn getMultiplicationInverseElement(&self) -> T;
+	fn addElement(&self, x: T, y: T) -> T;
+	fn subElement(&self, x: T, y: T) -> T;
+	fn mulElement(&self, x: T, y: T) -> T;
+	fn divElement(&self, x: T, y: T) -> T;
 }

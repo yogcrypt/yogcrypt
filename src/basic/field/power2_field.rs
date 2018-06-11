@@ -4,6 +4,7 @@ use self::rand::random;
 use std::option;
 use ::basic::field::*;
 use ::basic::cell::yU64x4::*;
+use ::basic::cell::yU64x8::*;
 
 
 pub struct power2_field
@@ -104,7 +105,7 @@ macro_rules! YU64x4_LSH_192 {
 	)
 }
 
-impl Field for power2_field
+impl power2_field
 {
 	fn getNewElement(&self, x: yU64x4) -> yU64x4
 	{
@@ -115,6 +116,10 @@ impl Field for power2_field
 	{
 		yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>())  & self.moduler
 	}
+}
+
+impl theField for power2_field
+{
 
 	fn getAdditionInverseElement(&self, mut p: yU64x4) -> yU64x4
 	{
@@ -122,18 +127,11 @@ impl Field for power2_field
 	}
 
 	// unfinished
-	fn getMultiplicationInverseElement(&self, mut p: yU64x4) -> Option<yU64x4>
+	fn getMultiplicationInverseElement(&self, mut p: yU64x4) -> yU64x4
 	{
 		p = p & self.moduler;
 
-		if(p.value.0==0&&p.value.1==0&&p.value.2==0&&p.value.3==0)
-		{
-			Option::None
-		}
-		else 
-		{	
-			Option::Some(yU64x4::new(0,0,0,0))
-		}
+		p
 	}
 
 	fn addElement(&self, p: yU64x4, q: yU64x4) -> yU64x4
@@ -148,11 +146,20 @@ impl Field for power2_field
 
 	fn mulElement(&self, p: yU64x4, q: yU64x4) -> yU64x4
 	{
+		let mut x = yU64x8::new(0, 0, 0, 0, 0, 0, 0, 0);
+
+		let i = q.value.0;
+		for m in 0..64 
+		{
+			if(i%2==1) {x ^= p.letfRotateTo_yU64x8(m)};
+			i >> 1;
+		}
+
 		p^q
 	}
 
-	fn divElement(&self, p: yU64x4, q: yU64x4) -> Option<yU64x4>
+	fn divElement(&self, p: yU64x4, q: yU64x4) -> yU64x4
 	{
-		Option::None
+		p
 	}
 }

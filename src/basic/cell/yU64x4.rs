@@ -146,20 +146,26 @@ impl BitXorAssign for yU64x4
 
 impl yU64x4
 {
-	fn letfRotateTo_yU64x8(self, sh: usize) -> yU64x8
+	pub fn letfRotateTo_yU64x8(self, sh: usize) -> yU64x8
 	{
 		let shn = sh / 64;
 		let shx = sh % 64;
 
+		let t = (64-shx) as u32;
+
 		let mut r = yU64x8
 		{
-			value:(0, (self.value.0>>(64-shx)), (self.value.1>>(64-shx)), (self.value.2>>(64-shx)), (self.value.3>>(64-shx)), 0, 0, 0),
+			value:(0, 
+				if(t!=64){self.value.0>>t} else {0}, 
+				if(t!=64){self.value.1>>t} else {0}, 
+				if(t!=64){self.value.2>>t} else {0}, 
+				if(t!=64){self.value.3>>t} else {0}, 0, 0, 0),
 		};
 
-		r.value.0 &= (self.value.0 << shx);
-		r.value.1 &= (self.value.1 << shx);
-		r.value.2 &= (self.value.2 << shx);
-		r.value.3 &= (self.value.3 << shx);
+		r.value.0 |= (self.value.0 << shx);
+		r.value.1 |= (self.value.1 << shx);
+		r.value.2 |= (self.value.2 << shx);
+		r.value.3 |= (self.value.3 << shx);
 
 		match shn
 		{
@@ -170,21 +176,31 @@ impl yU64x4
 					r.value.3 = r.value.2;
 					r.value.2 = r.value.1;
 					r.value.1 = r.value.0;
+					r.value.0 = 0;
 			   	 },
 			2 => {
 					r.value.5 = r.value.3;
 					r.value.4 = r.value.2;
 					r.value.3 = r.value.1;
 					r.value.2 = r.value.0;
+					r.value.1 = 0;
+					r.value.0 = 0;
 				 },
 			3 => {
 					r.value.5 = r.value.2;
 					r.value.4 = r.value.1;
 					r.value.3 = r.value.0;
+					r.value.2 = 0;
+					r.value.1 = 0;
+					r.value.0 = 0;
 				 },
 			4 => {
 					r.value.5 = r.value.1;
 					r.value.4 = r.value.0;
+					r.value.3 = 0;
+					r.value.2 = 0;
+					r.value.1 = 0;
+					r.value.0 = 0;
 				 },
 			_ => {
 					panic!("cannot hold in yU64x8!");
@@ -192,5 +208,44 @@ impl yU64x4
 		};
 
 		r
+	}
+}
+
+impl yU64x4
+{
+	pub fn leftShift1(&mut self)
+	{
+		self.value.3 <<= 1;
+		self.value.3 |= (self.value.2 >> 63);
+		self.value.2 <<= 1;
+		self.value.2 |= (self.value.1 >> 63);
+		self.value.1 <<= 1;
+		self.value.1 |= (self.value.0 >> 63);
+		self.value.0 <<= 1;
+	}
+
+	pub fn rightShift1(&mut self)
+	{
+		self.value.0 >>= 1;
+		self.value.0 |= (self.value.1 << 63);
+		self.value.1 >>= 1;
+		self.value.1 |= (self.value.2 << 63);
+		self.value.2 >>= 1;
+		self.value.2 |= (self.value.3 << 63);
+		self.value.3 >>= 1;
+	}
+
+	pub fn get(&self, i: usize) -> u64
+	{
+		let n = i/64;
+		let x = i%64;
+		match n 
+		{
+			0 => ((self.value.0>>x)%2),
+			1 => ((self.value.1>>x)%2),
+			2 => ((self.value.2>>x)%2),
+			3 => ((self.value.3>>x)%2),
+			_ => (panic!("unknown n")),
+		}
 	}
 }

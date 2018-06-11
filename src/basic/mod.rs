@@ -1,3 +1,4 @@
 pub mod num_extend;
 pub mod field;
-mod cell;
+pub mod group;
+pub mod cell;
