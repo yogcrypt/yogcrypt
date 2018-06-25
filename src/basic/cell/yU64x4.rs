@@ -55,7 +55,7 @@ impl Display for yU64x4
 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
 	{
-		write!(f, "{:016X} {:016X} {:016X} {:016X}", self.value.3, self.value.2, self.value.1, self.value.0)
+		write!(f, "{:016X}{:016X}{:016X}{:016X}", self.value.3, self.value.2, self.value.1, self.value.0)
 	}
 }
 
@@ -247,5 +247,53 @@ impl yU64x4
 			3 => ((self.value.3>>x)%2),
 			_ => (panic!("unknown n")),
 		}
+	}
+}
+
+impl yU64x4
+{
+	// unfinished
+	pub fn getRand(lowerBound: yU64x4, upperBound: yU64x4) -> yU64x4
+	{
+		yU64x4::new(0,0,0,0)
+	}
+}
+
+// Access
+impl yU64x4
+{
+	// get the i-th lowest byte
+	pub fn getByte(&self, mut i: usize) -> u8
+	{
+		i %= 32;
+		let x = i%8;
+
+		let q;
+		match (i/8)
+		{
+			0 => (q=self.value.0),
+			1 => (q=self.value.1),
+			2 => (q=self.value.2),
+			3 => (q=self.value.3),
+			_ => (q=0),
+		}
+
+		(q>>(x*8)) as u8
+	}
+
+	pub fn toU8Slice(&self) -> [u8;32]
+	{
+		let arr = [
+			(self.value.3 >> 56) as u8, (self.value.3 >> 48) as u8, (self.value.3 >> 40) as u8, (self.value.3 >> 32) as u8,
+			(self.value.3 >> 24) as u8, (self.value.3 >> 16) as u8, (self.value.3 >> 8) as u8, self.value.3 as u8,
+			(self.value.2 >> 56) as u8, (self.value.2 >> 48) as u8, (self.value.2 >> 40) as u8, (self.value.2 >> 32) as u8,
+			(self.value.2 >> 24) as u8, (self.value.2 >> 16) as u8, (self.value.2 >> 8) as u8, self.value.2 as u8,
+			(self.value.1 >> 56) as u8, (self.value.1 >> 48) as u8, (self.value.1 >> 40) as u8, (self.value.1 >> 32) as u8,
+			(self.value.1 >> 24) as u8, (self.value.1 >> 16) as u8, (self.value.1 >> 8) as u8, self.value.1 as u8,
+			(self.value.0 >> 56) as u8, (self.value.0 >> 48) as u8, (self.value.0 >> 40) as u8, (self.value.0 >> 32) as u8,
+			(self.value.0 >> 24) as u8, (self.value.0 >> 16) as u8, (self.value.0 >> 8) as u8, self.value.0 as u8,
+		];
+
+		arr
 	}
 }
