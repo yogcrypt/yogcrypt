@@ -84,9 +84,10 @@ impl theField for prime_field
 	// get the multipilication inverse element of x, or get 0 for 0
 	fn getMultiplicationInverseElement(&self, x: yU64x4) -> yU64x4
 	{
-		let mut T = yU64x4::new(1,0,0,0);
+		// Aborted algorithm: x^-1 = x^(p-2)
+/*		let mut T = yU64x4::new(1,0,0,0);
 		let mut X = x;
-		let mut e = prime_field::sub_yU64x4(self.prime,yU64x4::new(1,0,0,0));
+		let mut e = prime_field::sub_yU64x4(self.prime,yU64x4::new(2,0,0,0));
 
 		while(!prime_field::equalToOne(e))
 		{
@@ -101,7 +102,8 @@ impl theField for prime_field
 				X = self.mulElement(X,X);
 			}
 		}
-		println!("inverse1 = {}",self.mulElement(T,X));
+		
+		self.mulElement(T,X))*/
 
 
 
@@ -114,12 +116,8 @@ impl theField for prime_field
 
 		while((!prime_field::equalToOne(u))&&(!prime_field::equalToOne(v)))
 		{
-/*			println!("u={}",u);
-			println!("v={}",v);
-			println!("while!");*/
 			while(u.value.0%2==0)
 			{
-				//println!("while");
 				u.rightShift1();
 
 				if(x1.value.0%2==0) 
@@ -128,8 +126,13 @@ impl theField for prime_field
 				}
 				else 
 				{
-					x1 = prime_field::add_yU64x4(x1,self.prime);
+					let (u,overflowFlag) = self.addElementNoMod(x1,self.prime);
+					x1 = u;
 					x1.rightShift1();
+					if(overflowFlag)
+					{
+						x1.value.3 |= 0x8000000000000000;
+					}
 				}
 			}
 
@@ -143,8 +146,14 @@ impl theField for prime_field
 				} 
 				else 
 				{
-					x2 = prime_field::add_yU64x4(x2,self.prime);
+
+					let (u,overflowFlag) = self.addElementNoMod(x2,self.prime);
+					x2 = u;
 					x2.rightShift1();
+					if(overflowFlag)
+					{
+						x2.value.3 |= 0x8000000000000000;
+					}
 				}
 			}
 
@@ -167,7 +176,6 @@ impl theField for prime_field
 			{
 				x1 = prime_field::sub_yU64x4(x1, self.prime);
 			}
-
 			x1
 		}
 		else
