@@ -59,7 +59,12 @@ impl prime_field
 		field.rho2 = field.rho;
 		for i in 0..256
 		{
+			let y = field.rho2.value.3 >> 31;
 			field.rho2.leftShift1();
+			if(y==1)
+			{
+				field.rho2 = field.addElement(field.rho2, field.rho);
+			}
 			if prime_field::largerEqualThan(field.rho2, prime)
 			{
 				field.rho2 = prime_field::sub_yU64x4(field.rho2, prime);
@@ -81,7 +86,7 @@ impl theField for prime_field
 	// get the multipilication inverse element of x, or get 0 for 0
 	fn getMultiplicationInverseElement(&self, x: yU64x4) -> yU64x4
 	{
-/*		let mut T = yU64x4::new(1,0,0,0);
+		let mut T = yU64x4::new(1,0,0,0);
 		let mut X = x;
 		let mut e = prime_field::sub_yU64x4(self.prime,yU64x4::new(1,0,0,0));
 
@@ -100,7 +105,7 @@ impl theField for prime_field
 		}
 		println!("inverse1 = {}",self.mulElement(T,X));
 
-*/
+
 
 		if(prime_field::equalToZero(x)) {return yU64x4::new(0,0,0,0);}
 
@@ -249,11 +254,12 @@ impl prime_field
 	{
 		let mut z = yU64x4::new(0, 0, 0, 0);
 
+
 		for i in 0..256
 		{
 			z = if(y.get(i)==1) 
 			{
-				prime_field::add_yU64x4(z,x)
+				self.addElement(z,x)
 			} 
 			else 
 			{
@@ -262,10 +268,20 @@ impl prime_field
 
 			if(z.value.0%2==1) 
 			{
-				z = prime_field::add_yU64x4(z, self.prime);
+				let (u,overflowFlag) = self.addElementNoMod(z, self.prime);
+				z = u;
+				z.rightShift1();
+				if(overflowFlag)
+				{
+					z.value.3 |= 0x8000000000000000;
+				}
+			}
+			else 
+			{
+				z.rightShift1();
 			}
 
-			z.rightShift1();
+			
 		};
 
 		if(prime_field::largerEqualThan(z, self.prime)) {prime_field::sub_yU64x4(z, self.prime)} else {z}
@@ -404,7 +420,7 @@ impl prime_field
 		{
 			value: (res0, res1, res2, res3),
 		};
-		
+
 		(m,overflowFlag)
 	}
 }
