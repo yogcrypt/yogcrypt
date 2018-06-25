@@ -48,10 +48,8 @@ impl prime_field
 			}
 			if(prime_field::equalToZero(field.rho)) //overflow when calculate rho
 			{
-				let mut Rho = yU64x4::new(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-				Rho = prime_field::sub_yU64x4(Rho, field.prime);
-				Rho = prime_field::add_yU64x4(Rho, yU64x4::new(1,0,0,0));
-				field.rho = Rho;
+				let mut Rho = !field.prime;
+				field.rho = prime_field::add_yU64x4(Rho,yU64x4::new(1,0,0,0));
 			}
 		}
 
@@ -59,9 +57,9 @@ impl prime_field
 		field.rho2 = field.rho;
 		for i in 0..256
 		{
-			let y = field.rho2.value.3 >> 31;
+			let y = field.rho2.value.3 >> 63;
 			field.rho2.leftShift1();
-			if(y==1)
+			if(y!=0)
 			{
 				field.rho2 = field.addElement(field.rho2, field.rho);
 			}
