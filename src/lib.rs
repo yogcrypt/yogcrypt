@@ -11,6 +11,9 @@
 #![feature(i128_type)]
 #![feature(stdsimd)]
 
+extern crate rand;
+extern crate bit_vec;
+
 pub mod sm2;
 pub mod sm3;
 pub mod sm4_fast;
