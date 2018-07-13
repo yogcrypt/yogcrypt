@@ -11,6 +11,7 @@ pub struct prime_field
 	pub negPrime: yU64x4,
 	pub rho: yU64x4,
 	pub rho2: yU64x4,
+	pub inv2: yU64x4,
 }
 
 macro_rules! OVERFLOWING_ADD
@@ -30,12 +31,17 @@ impl prime_field
 {
 	pub fn new(prime: yU64x4) -> prime_field
 	{
+		let mut inv2 = prime;
+		inv2.value.0 += 1;
+		inv2.rightShift1();
+
 		let mut field = prime_field
 		{
 			prime,
 			negPrime: prime_field::getNeg(prime),
 			rho: yU64x4::new(1,0,0,0),
 			rho2: yU64x4::new(1,0,0,0),
+			inv2,
 		};
 
 		//compute rho
@@ -103,9 +109,7 @@ impl theField for prime_field
 			}
 		}
 		
-		self.mulElement(T,X))*/
-
-
+		println!("inv1={}",self.mulElement(T,X));*/
 
 		if(prime_field::equalToZero(x)) {return yU64x4::new(0,0,0,0);}
 
@@ -169,7 +173,6 @@ impl theField for prime_field
 			}
 		}
 
-
 		if(prime_field::equalToOne(u))
 		{
 			while(prime_field::largerEqualThan(x1,self.prime))
@@ -232,8 +235,9 @@ impl theField for prime_field
 	}
 
 	fn divElement(&self, x: yU64x4, y: yU64x4) -> yU64x4
-	{
-		self.mulElement(x, self.getMultiplicationInverseElement(y))
+	{	
+		let q = self.getMultiplicationInverseElement(y);
+		self.mulElement(x, q)
 	}
 
 /*	fn sqrtElement(&self, x: yU64x4) -> yU64x4
@@ -369,7 +373,7 @@ impl prime_field
 		}
 	}
 
-	fn sub_yU64x4(x: yU64x4, y: yU64x4) -> yU64x4
+	pub fn sub_yU64x4(x: yU64x4, y: yU64x4) -> yU64x4
 	{
 		prime_field::add_yU64x4(x, prime_field::getNeg(y))
 	}

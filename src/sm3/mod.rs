@@ -143,6 +143,7 @@ impl Sm3Cryptor
 		}
 	}
 
+	// primLen: bit length of msg
 	pub fn encrypt(&self, msg: &[u32], primLen: usize) -> [u32;8]
 	{
 		let mut msgLen = primLen;
@@ -197,6 +198,22 @@ impl Sm3Cryptor
 		}
 
 		V
+	}
+
+	pub fn encryptToU8s(&self, msg: &[u32], primLen: usize) -> [u8;32]
+	{
+		let L = self.encrypt(msg, primLen);
+
+		[
+		(L[0]>>24) as u8, (L[0]>>16) as u8, (L[0]>>8) as u8, L[0] as u8,
+		(L[1]>>24) as u8, (L[1]>>16) as u8, (L[1]>>8) as u8, L[1] as u8,
+		(L[2]>>24) as u8, (L[2]>>16) as u8, (L[2]>>8) as u8, L[2] as u8,
+		(L[3]>>24) as u8, (L[3]>>16) as u8, (L[3]>>8) as u8, L[3] as u8,
+		(L[4]>>24) as u8, (L[4]>>16) as u8, (L[4]>>8) as u8, L[4] as u8,
+		(L[5]>>24) as u8, (L[5]>>16) as u8, (L[5]>>8) as u8, L[5] as u8,
+		(L[6]>>24) as u8, (L[6]>>16) as u8, (L[6]>>8) as u8, L[6] as u8,
+		(L[7]>>24) as u8, (L[7]>>16) as u8, (L[7]>>8) as u8, L[7] as u8,
+		]
 	}
 
 }
