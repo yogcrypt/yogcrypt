@@ -3,6 +3,7 @@ use std::fmt::Display;
 
 use std::ops::{BitAnd, BitOr, BitXor, Not};
 use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign};
+use std::ops::{Add, Sub, Neg};
 
 use ::basic::cell::UniformAccessU64;
 use ::basic::cell::yU64x8::*;
@@ -11,6 +12,20 @@ use ::basic::cell::yU64x8::*;
 pub struct yU64x4
 {
 	pub value: (u64, u64, u64, u64),
+}
+
+
+macro_rules! OVERFLOWING_ADD
+{
+	($x:expr, $y:expr, $result:ident, $overflowFlag:ident) => 
+	(
+		let car = if ($overflowFlag==true) {1} else {0};
+
+		let r1 = u64::overflowing_add($x, $y);
+		let r2 = u64::overflowing_add(r1.0, car);
+		$result = r2.0;
+		$overflowFlag = r1.1|r2.1;
+	)
 }
 
 impl yU64x4
@@ -144,6 +159,75 @@ impl BitXorAssign for yU64x4
 	}
 }
 
+impl Neg for yU64x4
+{
+	type Output = Self;
+
+	fn neg(self) -> yU64x4
+	{
+		let mut x = yU64x4::new(0,0,0,0);
+
+		if self.value.0!=0
+		{
+			x.value.0 = u64::wrapping_neg(x.value.0);
+			x.value.1 = !x.value.1;
+			x.value.2 = !x.value.2;
+			x.value.3 = !x.value.3;
+		}
+		else if self.value.1!=0
+		{
+			x.value.1 = u64::wrapping_neg(x.value.1);
+			x.value.2 = !x.value.2;
+			x.value.3 = !x.value.3;
+		}
+		else if self.value.2!=0
+		{
+			x.value.2 = u64::wrapping_neg(x.value.2);
+			x.value.3 = !x.value.3;
+		}
+		else if self.value.3!=0
+		{
+			x.value.3 = u64::wrapping_neg(x.value.3);
+		}
+
+		x
+	}
+}
+
+impl Add for yU64x4
+{
+	type Output = Self;
+
+	fn add(self, rhs: yU64x4) -> yU64x4
+	{
+		let res0: u64;
+		let res1: u64;
+		let res2: u64;
+		let res3: u64;
+		let mut overflowFlag = false;
+
+		OVERFLOWING_ADD!(self.value.0, rhs.value.0, res0, overflowFlag);
+		OVERFLOWING_ADD!(self.value.1, rhs.value.1, res1, overflowFlag);
+		OVERFLOWING_ADD!(self.value.2, rhs.value.2, res2, overflowFlag);
+		OVERFLOWING_ADD!(self.value.3, rhs.value.3, res3, overflowFlag);
+		
+		yU64x4
+		{
+			value: (res0, res1, res2, res3),
+		}
+	}
+}
+
+impl Sub for yU64x4
+{
+	type Output = Self;
+
+	fn sub(self, rhs: yU64x4) -> yU64x4
+	{
+		self + (-rhs)
+	}
+}
+
 impl yU64x4
 {
 	pub fn letfRotateTo_yU64x8(self, sh: usize) -> yU64x8
@@ -247,15 +331,6 @@ impl yU64x4
 			3 => ((self.value.3>>x)%2),
 			_ => (panic!("unknown n")),
 		}
-	}
-}
-
-impl yU64x4
-{
-	// unfinished
-	pub fn getRand(lowerBound: yU64x4, upperBound: yU64x4) -> yU64x4
-	{
-		yU64x4::new(0,0,0,0)
 	}
 }
 

@@ -95,9 +95,7 @@ impl Sm2Cryptor
 		s[50] = (Pa.y.value.0 >> 32) as u32;
 		s[51] =	Pa.y.value.0 as u32;
 
-		let sm3Cryptor = Sm3Cryptor::new();
-
-		let Z = sm3Cryptor.encrypt(&s[0..52],52*32);
+		let Z = sm3Enc(&s[0..52],52*32);
 
 		Z
 	}
@@ -108,9 +106,8 @@ impl Sm2Cryptor
 		let Z = self.getZ(self.P);
 
 		let M = [Msg, &Z].concat();
-
-		let sm3Cryptor = Sm3Cryptor::new();		
-		let E = sm3Cryptor.encrypt(&M, (len+8)*32);
+	
+		let E = sm3Enc(&M, (len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 		
 		let mut k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
@@ -154,8 +151,7 @@ impl Sm2Cryptor
 		let Za = self.getZ(Pa);
 		let M = [Msg, &Za].concat();
 
-		let sm3Cryptor = Sm3Cryptor::new();
-		let E = sm3Cryptor.encrypt(&M,(len+8)*32);
+		let E = sm3Enc(&M,(len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 
 		let Fn = prime_field::new(self.Ecc.n);
@@ -193,8 +189,7 @@ impl Sm2Cryptor
 
 		let M = [Msg, &Z].concat();
 
-		let sm3Cryptor = Sm3Cryptor::new();		
-		let E = sm3Cryptor.encrypt(&M, (len+8)*32);
+		let E = sm3Enc(&M, (len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 		
 		let mut k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
@@ -242,8 +237,7 @@ impl Sm2Cryptor
 		let Za = self.getZ(Pa);
 		let M = [Msg, &Za].concat();
 
-		let sm3Cryptor = Sm3Cryptor::new();
-		let E = sm3Cryptor.encrypt(&M,(len+8)*32);
+		let E = sm3Enc(&M,(len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 
 		let Fn = prime_field::new(self.Ecc.n);
