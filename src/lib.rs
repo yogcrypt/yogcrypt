@@ -8,15 +8,13 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-#![feature(i128_type)]
-#![feature(stdsimd)]
 
 extern crate rand;
 extern crate bit_vec;
 
 pub mod sm2;
 pub mod sm3;
-pub mod sm4_fast;
+pub mod sm4;
 pub mod basic;
 
 #[inline]

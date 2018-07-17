@@ -299,11 +299,11 @@ macro_rules! SM4_TP {
 }
 
 macro_rules! SM4_RNDS { 
-	($k0:expr,$k1:expr,$k2:expr,$k3:expr,$B0:ident,$B1:ident,$B2:ident,$B3:ident,$self_:ident,$Rk:ident) => (
-	$B0 ^= SM4_T!($B1 ^ $B2 ^ $B3 ^ $self_.$Rk[$k0]);
-  	$B1 ^= SM4_T!($B0 ^ $B2 ^ $B3 ^ $self_.$Rk[$k1]);
-  	$B2 ^= SM4_T!($B0 ^ $B1 ^ $B3 ^ $self_.$Rk[$k2]);
-  	$B3 ^= SM4_T!($B0 ^ $B1 ^ $B2 ^ $self_.$Rk[$k3]);
+	($k0:expr, $k1:expr, $k2:expr, $k3:expr, $B0:ident, $B1:ident, $B2:ident, $B3:ident, $Rk:ident) => (
+	$B0 ^= SM4_T!($B1 ^ $B2 ^ $B3 ^ $Rk[$k0]);
+  	$B1 ^= SM4_T!($B0 ^ $B2 ^ $B3 ^ $Rk[$k1]);
+  	$B2 ^= SM4_T!($B0 ^ $B1 ^ $B3 ^ $Rk[$k2]);
+  	$B3 ^= SM4_T!($B0 ^ $B1 ^ $B2 ^ $Rk[$k3]);
   	)
 } 
 
@@ -314,91 +314,73 @@ pub struct SM4_Cryptor
 	hasRkGenerated: bool,
 }
 
-impl SM4_Cryptor
+pub fn getRk(Mk: &[u8;16]) -> [u32;32]
 {
-	pub fn new(key: &[u8;16]) -> SM4_Cryptor
-	{
-		let mut newKey: [u8;16] = [0;16];
-		for i in 0..SM4_KEY_SIZE
-		{
-			newKey[i] = key[i];
-		}
+	let mut Rk = [0u32;32];
 
-		SM4_Cryptor 
-		{
-			Mk: newKey,
-			Rk: [0;32],
-			hasRkGenerated: false
-		}
+	let mut K: [u32;4] = [0;4];
+	K[0] = u8_slice_to_u32_msb_first(&Mk[0..4]) ^ FK[0];
+	K[1] = u8_slice_to_u32_msb_first(&Mk[4..8]) ^ FK[1];
+	K[2] = u8_slice_to_u32_msb_first(&Mk[8..12]) ^ FK[2];
+	K[3] = u8_slice_to_u32_msb_first(&Mk[12..16]) ^ FK[3];
+
+	for i in 0..32
+	{
+		K[i%4] ^= SM4_TP!(K[(i+1)%4] ^ K[(i+2)%4] ^ K[(i+3)%4] ^ CK[i]);
+		Rk[i] = K[i % 4];
 	}
 
-	pub fn generate_round_key(&mut self)
-	{
-		self.hasRkGenerated = true;
+	Rk
+}
 
-		let mut K: [u32;4] = [0;4];
-		K[0] = u8_slice_to_u32_msb_first(&self.Mk[0..4]) ^ FK[0];
-		K[1] = u8_slice_to_u32_msb_first(&self.Mk[4..8]) ^ FK[1];
-		K[2] = u8_slice_to_u32_msb_first(&self.Mk[8..12]) ^ FK[2];
-		K[3] = u8_slice_to_u32_msb_first(&self.Mk[12..16]) ^ FK[3];
+pub fn sm4Enc(Rk: &[u32], ptxt: &[u32;4]) -> [u32;4]
+{
+		let mut B0: u32 = ptxt[0];
+		let mut B1: u32 = ptxt[1];
+		let mut B2: u32 = ptxt[2];
+		let mut B3: u32 = ptxt[3];
 
-		for i in 0..32
-		{
-			K[i%4] ^= SM4_TP!(K[(i+1)%4] ^ K[(i+2)%4] ^ K[(i+3)%4] ^ CK[i]);
-			self.Rk[i] = K[i % 4];
-		}
-	}
+		let mut ctxt: [u32;4] = [0;4];
 
-	pub fn enc_block(&self, plaintext: &[u32;4]) -> [u32;4]
-	{
-		let mut B0: u32 = plaintext[0];
-		let mut B1: u32 = plaintext[1];
-		let mut B2: u32 = plaintext[2];
-		let mut B3: u32 = plaintext[3];
+		SM4_RNDS!( 0,  1,  2,  3, B0, B1, B2, B3, Rk);
+		SM4_RNDS!( 4,  5,  6,  7, B0, B1, B2, B3, Rk);
+		SM4_RNDS!( 8,  9, 10, 11, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(12, 13, 14, 15, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(16, 17, 18, 19, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(20, 21, 22, 23, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(24, 25, 26, 27, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(28, 29, 30, 31, B0, B1, B2, B3, Rk);
 
-		let mut ciphertext: [u32;4] = [0;4];
+		ctxt[0] = B3;
+		ctxt[1] = B2;
+		ctxt[2] = B1;
+		ctxt[3] = B0;
 
-		SM4_RNDS!( 0,  1,  2,  3, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 4,  5,  6,  7, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 8,  9, 10, 11, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(12, 13, 14, 15, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(16, 17, 18, 19, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(20, 21, 22, 23, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(24, 25, 26, 27, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(28, 29, 30, 31, B0, B1, B2, B3, self, Rk);
+		ctxt
+}
 
-		ciphertext[0] = B3;
-		ciphertext[1] = B2;
-		ciphertext[2] = B1;
-		ciphertext[3] = B0;
+pub fn sm4Dec(Rk: &[u32], ctxt: &[u32;4]) -> [u32;4]
+{
+		let mut B0: u32 = ctxt[0];
+		let mut B1: u32 = ctxt[1];
+		let mut B2: u32 = ctxt[2];
+		let mut B3: u32 = ctxt[3];
 
-		ciphertext
-	}
+		let mut ptxt:[u32;4] = [0;4];
 
-	pub fn dec_block(&self, ciphertext: &[u32;4]) -> [u32;4]
-	{
-		let mut B0: u32 = ciphertext[0];
-		let mut B1: u32 = ciphertext[1];
-		let mut B2: u32 = ciphertext[2];
-		let mut B3: u32 = ciphertext[3];
+		SM4_RNDS!(31, 30, 29, 28, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(27, 26, 25, 24, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(23, 22, 21, 20, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(19, 18, 17, 16, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(15, 14, 13, 12, B0, B1, B2, B3, Rk);
+		SM4_RNDS!(11, 10,  9,  8, B0, B1, B2, B3, Rk);
+		SM4_RNDS!( 7,  6,  5,  4, B0, B1, B2, B3, Rk);
+		SM4_RNDS!( 3,  2,  1,  0, B0, B1, B2, B3, Rk);
 
-		let mut plaintext:[u32;4] = [0;4];
+		ptxt[0] = B3;
+		ptxt[1] = B2;
+		ptxt[2] = B1;
+		ptxt[3] = B0;
 
-		SM4_RNDS!(31, 30, 29, 28, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(27, 26, 25, 24, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(23, 22, 21, 20, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(19, 18, 17, 16, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(15, 14, 13, 12, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!(11, 10,  9,  8, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 7,  6,  5,  4, B0, B1, B2, B3, self, Rk);
-		SM4_RNDS!( 3,  2,  1,  0, B0, B1, B2, B3, self, Rk);
-
-		plaintext[0] = B3;
-		plaintext[1] = B2;
-		plaintext[2] = B1;
-		plaintext[3] = B0;
-
-		plaintext
-	}
-	
+		ptxt
 }
