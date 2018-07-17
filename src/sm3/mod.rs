@@ -128,92 +128,74 @@ macro_rules! copyArray
 	($v1:ident, $v2:ident,$($i:expr),* ) => ($(v1[i] = v2[i];)*)
 }
 
-pub struct Sm3Cryptor
+pub fn sm3Enc(msg: &[u32], primLen: usize) -> [u32;8]
 {
+	let mut msgLen = primLen;
+	msgLen += 1; // Add "1" to the end of msg
 
+	if msgLen%512>448 // too long
+	{
+		msgLen += (msgLen%512)+512;
+	}
+	else 
+	{
+		msgLen += msgLen%512;
+	}
+
+	let msgLen1: u32 = (primLen/0x0000_0001_0000_0000) as u32;
+	let msgLen2: u32 = (primLen%0x0000_0001_0000_0000) as u32;
+
+	// set V to IV
+	let mut V: [u32;8] = [0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e];
+
+	for i in 0..msgLen/512+1
+	// msg blocks' index;
+	// the operations are the same except the last block
+	{
+		//println!("i={}",i);
+		let mut B: [u32;16] = [0;16];
+		for j in 0..16 // words' index in a block
+		{
+			if (i*16+j)<msg.len() as usize
+			{
+				B[j as usize] = msg[(i*16+j) as usize];
+			}
+		}
+
+		if primLen+1>512*i&&primLen+1<=512*(i+1) // add "1" somewhere in this block
+		{
+			let mut bias = primLen % 512;
+
+			let mut biasOfWord = (bias / 32) as u32;
+			let mut biasOfBit = (bias % 32) as u32;
+			B[biasOfWord as usize] += 0x80000000u32.rotate_right(biasOfBit);
+		}
+
+		if i==(msgLen/512) // the last block should store the length of msg
+		{
+			B[14] = msgLen1;
+			B[15] = msgLen2;
+		}
+
+		V = SM3_CF(V, B);
+
+	}
+
+	V
 }
 
-impl Sm3Cryptor
+pub fn sm3EncToU8(msg: &[u32], primLen: usize) -> [u8;32]
 {
-	pub fn new() -> Sm3Cryptor
-	{
-		Sm3Cryptor
-		{
+	let L = sm3Enc(msg, primLen);
 
-		}
-	}
-
-	// primLen: bit length of msg
-	pub fn encrypt(&self, msg: &[u32], primLen: usize) -> [u32;8]
-	{
-		let mut msgLen = primLen;
-		msgLen += 1; // Add "1" to the end of msg
-
-		if msgLen%512>448 // too long
-		{
-			msgLen += (msgLen%512)+512;
-		}
-		else 
-		{
-			msgLen += msgLen%512;
-		}
-
-		let msgLen1: u32 = (primLen/0x0000_0001_0000_0000) as u32;
-		let msgLen2: u32 = (primLen%0x0000_0001_0000_0000) as u32;
-
-		// set V to IV
-		let mut V: [u32;8] = [0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e];
-
-		for i in 0..msgLen/512+1
-		// msg blocks' index;
-		// the operations are the same except the last block
-		{
-			//println!("i={}",i);
-			let mut B: [u32;16] = [0;16];
-			for j in 0..16 // words' index in a block
-			{
-				if (i*16+j)<msg.len() as usize
-				{
-					B[j as usize] = msg[(i*16+j) as usize];
-				}
-			}
-
-			if primLen+1>512*i&&primLen+1<=512*(i+1) // add "1" somewhere in this block
-			{
-				let mut bias = primLen % 512;
-
-				let mut biasOfWord = (bias / 32) as u32;
-				let mut biasOfBit = (bias % 32) as u32;
-				B[biasOfWord as usize] += 0x80000000u32.rotate_right(biasOfBit);
-			}
-
-			if i==(msgLen/512) // the last block should store the length of msg
-			{
-				B[14] = msgLen1;
-				B[15] = msgLen2;
-			}
-
-			V = SM3_CF(V, B);
-
-		}
-
-		V
-	}
-
-	pub fn encryptToU8s(&self, msg: &[u32], primLen: usize) -> [u8;32]
-	{
-		let L = self.encrypt(msg, primLen);
-
-		[
-		(L[0]>>24) as u8, (L[0]>>16) as u8, (L[0]>>8) as u8, L[0] as u8,
-		(L[1]>>24) as u8, (L[1]>>16) as u8, (L[1]>>8) as u8, L[1] as u8,
-		(L[2]>>24) as u8, (L[2]>>16) as u8, (L[2]>>8) as u8, L[2] as u8,
-		(L[3]>>24) as u8, (L[3]>>16) as u8, (L[3]>>8) as u8, L[3] as u8,
-		(L[4]>>24) as u8, (L[4]>>16) as u8, (L[4]>>8) as u8, L[4] as u8,
-		(L[5]>>24) as u8, (L[5]>>16) as u8, (L[5]>>8) as u8, L[5] as u8,
-		(L[6]>>24) as u8, (L[6]>>16) as u8, (L[6]>>8) as u8, L[6] as u8,
-		(L[7]>>24) as u8, (L[7]>>16) as u8, (L[7]>>8) as u8, L[7] as u8,
-		]
-	}
-
+	[
+	(L[0]>>24) as u8, (L[0]>>16) as u8, (L[0]>>8) as u8, L[0] as u8,
+	(L[1]>>24) as u8, (L[1]>>16) as u8, (L[1]>>8) as u8, L[1] as u8,
+	(L[2]>>24) as u8, (L[2]>>16) as u8, (L[2]>>8) as u8, L[2] as u8,
+	(L[3]>>24) as u8, (L[3]>>16) as u8, (L[3]>>8) as u8, L[3] as u8,
+	(L[4]>>24) as u8, (L[4]>>16) as u8, (L[4]>>8) as u8, L[4] as u8,
+	(L[5]>>24) as u8, (L[5]>>16) as u8, (L[5]>>8) as u8, L[5] as u8,
+	(L[6]>>24) as u8, (L[6]>>16) as u8, (L[6]>>8) as u8, L[6] as u8,
+	(L[7]>>24) as u8, (L[7]>>16) as u8, (L[7]>>8) as u8, L[7] as u8,
+	]
 }

@@ -314,15 +314,15 @@ pub struct SM4_Cryptor
 	hasRkGenerated: bool,
 }
 
-pub fn getRk(Mk: &[u8;16]) -> [u32;32]
+pub fn getSm4Rk(Mk: &[u32;4]) -> [u32;32]
 {
 	let mut Rk = [0u32;32];
 
 	let mut K: [u32;4] = [0;4];
-	K[0] = u8_slice_to_u32_msb_first(&Mk[0..4]) ^ FK[0];
-	K[1] = u8_slice_to_u32_msb_first(&Mk[4..8]) ^ FK[1];
-	K[2] = u8_slice_to_u32_msb_first(&Mk[8..12]) ^ FK[2];
-	K[3] = u8_slice_to_u32_msb_first(&Mk[12..16]) ^ FK[3];
+	K[0] = &Mk[0] ^ FK[0];
+	K[1] = &Mk[1] ^ FK[1];
+	K[2] = &Mk[2] ^ FK[2];
+	K[3] = &Mk[3] ^ FK[3];
 
 	for i in 0..32
 	{
