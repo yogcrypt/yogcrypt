@@ -5,7 +5,7 @@ use ::basic::cell::yU64x8::*;
 
 const ZERO: yU64x4 =  yU64x4{value:(0,0,0,0)};
 
-pub struct prime_field
+pub struct primeField
 {
 	pub prime: yU64x4,
 	pub negPrime: yU64x4,
@@ -27,18 +27,18 @@ macro_rules! OVERFLOWING_ADD
 	)
 }
 
-impl prime_field
+impl primeField
 {
-	pub fn new(prime: yU64x4) -> prime_field
+	pub fn new(prime: yU64x4) -> primeField
 	{
 		let mut inv2 = prime;
 		inv2.value.0 += 1;
 		inv2.rightShift1();
 
-		let mut field = prime_field
+		let mut field = primeField
 		{
 			prime,
-			negPrime: prime_field::getNeg(prime),
+			negPrime: primeField::getNeg(prime),
 			rho: yU64x4::new(1,0,0,0),
 			rho2: yU64x4::new(1,0,0,0),
 			inv2,
@@ -48,14 +48,14 @@ impl prime_field
 		for i in 0..256
 		{
 			field.rho.leftShift1();
-			if prime_field::largerEqualThan(field.rho, prime)
+			if primeField::largerEqualThan(field.rho, prime)
 			{
-				field.rho = prime_field::sub_yU64x4(field.rho, prime);
+				field.rho = field.rho - prime;
 			}
-			if(prime_field::equalToZero(field.rho)) //overflow when calculate rho
+			if(primeField::equalToZero(field.rho)) //overflow when calculate rho
 			{
 				let mut Rho = !field.prime;
-				field.rho = prime_field::add_yU64x4(Rho,yU64x4::new(1,0,0,0));
+				field.rho = Rho+yU64x4::new(1,0,0,0);
 			}
 		}
 
@@ -69,9 +69,9 @@ impl prime_field
 			{
 				field.rho2 = field.addElement(field.rho2, field.rho);
 			}
-			if prime_field::largerEqualThan(field.rho2, prime)
+			if primeField::largerEqualThan(field.rho2, prime)
 			{
-				field.rho2 = prime_field::sub_yU64x4(field.rho2, prime);
+				field.rho2 = field.rho2 - prime;
 			}
 		}
 
@@ -80,11 +80,11 @@ impl prime_field
 	
 }
 
-impl theField for prime_field
+impl theField for primeField
 {
 	fn getAdditionInverseElement(&self, mut x: yU64x4) -> yU64x4
 	{
-		prime_field::sub_yU64x4(self.prime, x)
+		self.prime - x
 	}
 	
 	// get the multipilication inverse element of x, or get 0 for 0
@@ -93,9 +93,9 @@ impl theField for prime_field
 		// Aborted algorithm: x^-1 = x^(p-2)
 /*		let mut T = yU64x4::new(1,0,0,0);
 		let mut X = x;
-		let mut e = prime_field::sub_yU64x4(self.prime,yU64x4::new(2,0,0,0));
+		let mut e = primeField::sub_yU64x4(self.prime,yU64x4::new(2,0,0,0));
 
-		while(!prime_field::equalToOne(e))
+		while(!primeField::equalToOne(e))
 		{
 			if(e.value.0%2==1)
 			{
@@ -111,14 +111,14 @@ impl theField for prime_field
 		
 		println!("inv1={}",self.mulElement(T,X));*/
 
-		if(prime_field::equalToZero(x)) {return yU64x4::new(0,0,0,0);}
+		if(primeField::equalToZero(x)) {return yU64x4::new(0,0,0,0);}
 
 		let mut u = x;
 		let mut v = self.prime;
 		let mut x1 = yU64x4::new(1,0,0,0);
 		let mut x2 = yU64x4::new(0,0,0,0);
 
-		while((!prime_field::equalToOne(u))&&(!prime_field::equalToOne(v)))
+		while((!primeField::equalToOne(u))&&(!primeField::equalToOne(v)))
 		{
 			while(u.value.0%2==0)
 			{
@@ -161,7 +161,7 @@ impl theField for prime_field
 				}
 			}
 
-			if(prime_field::largerEqualThan(u,v))
+			if(primeField::largerEqualThan(u,v))
 			{
 				u = self.subElement(u,v);
 				x1 = self.subElement(x1,x2);
@@ -173,19 +173,19 @@ impl theField for prime_field
 			}
 		}
 
-		if(prime_field::equalToOne(u))
+		if(primeField::equalToOne(u))
 		{
-			while(prime_field::largerEqualThan(x1,self.prime))
+			while(primeField::largerEqualThan(x1,self.prime))
 			{
-				x1 = prime_field::sub_yU64x4(x1, self.prime);
+				x1 = x1 - self.prime;
 			}
 			x1
 		}
 		else
 		{
-			while(prime_field::largerEqualThan(x2, self.prime))
+			while(primeField::largerEqualThan(x2, self.prime))
 			{
-				x2 = prime_field::sub_yU64x4(x2, self.prime);
+				x2 = x2 - self.prime;
 			}
 			x2
 		}
@@ -215,8 +215,8 @@ impl theField for prime_field
 			m = self.addElement(self.rho, m);
 		} 
 
-		if prime_field::largerEqualThan(m,self.prime)
-		{ prime_field::sub_yU64x4(m,self.prime) }
+		if primeField::largerEqualThan(m,self.prime)
+		{ m - self.prime }
 		else 
 		{ m }
 	}
@@ -247,13 +247,13 @@ impl theField for prime_field
 }
 
 // Mong
-impl prime_field
+impl primeField
 {
 	pub fn transformToElement(&self, mut x: yU64x4) -> yU64x4
 	{
-		while(prime_field::largerEqualThan(x,self.prime))
+		while(primeField::largerEqualThan(x,self.prime))
 		{
-			x = prime_field::sub_yU64x4(x,self.prime);
+			x = x - self.prime;
 		}
 
 		x
@@ -294,7 +294,7 @@ impl prime_field
 			
 		};
 
-		if(prime_field::largerEqualThan(z, self.prime)) {prime_field::sub_yU64x4(z, self.prime)} else {z}
+		if(primeField::largerEqualThan(z, self.prime)) {z - self.prime} else {z}
 	}
 
 	// get t * 2^(-256) mod p
@@ -318,12 +318,12 @@ impl prime_field
 			}
 		}
 
-		if(prime_field::largerEqualThan(t, self.prime)) {self.subElement(t, self.prime)} else {t}
+		if(primeField::largerEqualThan(t, self.prime)) {self.subElement(t, self.prime)} else {t}
 	}
 }
 
 // Arithmetic
-impl prime_field
+impl primeField
 {
 	fn getNeg(mut x: yU64x4) -> yU64x4
 	{
@@ -353,34 +353,10 @@ impl prime_field
 
 		x
 	}
-
-	pub fn add_yU64x4(x: yU64x4, y: yU64x4) -> yU64x4
-	{
-		let res0: u64;
-		let res1: u64;
-		let res2: u64;
-		let res3: u64;
-		let mut overflowFlag = false;
-
-		OVERFLOWING_ADD!(x.value.0, y.value.0, res0, overflowFlag);
-		OVERFLOWING_ADD!(x.value.1, y.value.1, res1, overflowFlag);
-		OVERFLOWING_ADD!(x.value.2, y.value.2, res2, overflowFlag);
-		OVERFLOWING_ADD!(x.value.3, y.value.3, res3, overflowFlag);
-		
-		yU64x4
-		{
-			value: (res0, res1, res2, res3),
-		}
-	}
-
-	pub fn sub_yU64x4(x: yU64x4, y: yU64x4) -> yU64x4
-	{
-		prime_field::add_yU64x4(x, prime_field::getNeg(y))
-	}
 }
 
 // Order
-impl prime_field
+impl primeField
 {
 	pub fn largerEqualThan(x: yU64x4, y: yU64x4) -> bool
 	{
@@ -410,7 +386,7 @@ impl prime_field
 	}
 }
 
-impl prime_field
+impl primeField
 {
 	pub fn addElementNoMod(&self, x: yU64x4, y: yU64x4) -> (yU64x4,bool)
 	{

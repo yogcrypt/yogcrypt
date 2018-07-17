@@ -1,6 +1,6 @@
 use ::basic::cell::yU64x4::*;
 use ::basic::field::theField;
-use ::basic::field::prime_field::*;
+use ::basic::field::primeField::*;
 
 use std::fmt;
 use std::fmt::Display;
@@ -89,7 +89,7 @@ pub struct ECC_Fp
 {
 	pub a: yU64x4,
 	pub b: yU64x4,
-	pub Fp: prime_field,
+	pub Fp: primeField,
 	pub G: Point,
 	pub l: u32, //the byte length of p
 	pub EFp: yU64x4, // order of ECC_Fp
@@ -100,17 +100,17 @@ impl ECC_Fp
 {
 	fn pointEqualToO(&self, P: Point) -> bool
 	{
-		prime_field::equalToZero(P.x) && prime_field::equalToZero(P.y)
+		primeField::equalToZero(P.x) && primeField::equalToZero(P.y)
 	}
 
 	fn pointEqualTo(&self, P: Point, Q: Point) -> bool
 	{
-		prime_field::equalTo(P.x,Q.x) && prime_field::equalTo(P.y, Q.y)
+		primeField::equalTo(P.x,Q.x) && primeField::equalTo(P.y, Q.y)
 	}
 
 	fn projPointEqualToO(&self, P: ProjPoint) -> bool
 	{
-		prime_field::equalToZero(P.x) && prime_field::equalToOne(P.y) && prime_field::equalToZero(P.z)
+		primeField::equalToZero(P.x) && primeField::equalToOne(P.y) && primeField::equalToZero(P.z)
 	}
 
 	fn projPointEqualTo(&self, P: ProjPoint, Q: ProjPoint) -> bool
@@ -118,12 +118,12 @@ impl ECC_Fp
 		let u = self.Fp.mulElement(P.z,self.Fp.getMultiplicationInverseElement(Q.z)); //u=z1*(z2^-1)
 
 		//return x1==x2*u && y1==y2*u
-		prime_field::equalTo(P.x,self.Fp.mulElement(Q.x,u)) && prime_field::equalTo(P.y,self.Fp.mulElement(Q.y,u))
+		primeField::equalTo(P.x,self.Fp.mulElement(Q.x,u)) && primeField::equalTo(P.y,self.Fp.mulElement(Q.y,u))
 	}
 
 	fn jacobPointEqualToO(&self, P: JacobPoint) -> bool
 	{ 
-		prime_field::equalToOne(P.x) && prime_field::equalToOne(P.y) && prime_field::equalToZero(P.z)
+		primeField::equalToOne(P.x) && primeField::equalToOne(P.y) && primeField::equalToZero(P.z)
 	}
 
 	fn jacobPointEuqalTo(&self, P: JacobPoint, Q: JacobPoint) -> bool
@@ -138,7 +138,7 @@ impl ECC_Fp
 		let s1 = self.Fp.mulElement(P.y,qz3);
 		let s2 = self.Fp.mulElement(Q.y,pz3);
 		//return x1==x2*u^2 && y1==y2*u^3
-		prime_field::equalTo(u1,u2) && prime_field::equalTo(s1,s2)
+		primeField::equalTo(u1,u2) && primeField::equalTo(s1,s2)
 	}
 
 	pub fn affineToProj(&self, P: Point) -> ProjPoint
@@ -221,7 +221,7 @@ impl ECC_Fp
 		{
 			a,
 			b,
-			Fp: prime_field::new(p),
+			Fp: primeField::new(p),
 			G: Point::new(x0,y0),
 			l: 32,
 			EFp: yU64x4::new(0,0,0,0),
@@ -238,7 +238,7 @@ impl ECC_Fp
 		let left = self.Fp.addElement(self.Fp.mulElement(self.Fp.addElement(self.Fp.mulElement(P.x,P.x),self.a),P.x),self.b);
 		let right = self.Fp.mulElement(P.y,P.y);
 
-		prime_field::equalTo(left,right)
+		primeField::equalTo(left,right)
 	}
 
 	pub fn getInvPoint(&self, P: Point) -> Point
@@ -252,7 +252,7 @@ impl ECC_Fp
 
 	pub fn isReciprocal(&self, P: Point, Q: Point) -> bool
 	{
-		return prime_field::equalTo(P.x,Q.x) && prime_field::equalTo(P.y, self.Fp.getAdditionInverseElement(Q.y))
+		return primeField::equalTo(P.x,Q.x) && primeField::equalTo(P.y, self.Fp.getAdditionInverseElement(Q.y))
 	}
 
 	pub fn addPoint(&self, P: Point, Q: Point) -> Point
@@ -261,8 +261,8 @@ impl ECC_Fp
 		{
 			Point
 			{
-				x: prime_field::add_yU64x4(P.x, Q.x),
-				y: prime_field::add_yU64x4(P.y, Q.y),
+				x: P.x + Q.x,
+				y: P.y + Q.y,
 			}
 		}
 		else if (self.isReciprocal(P, Q))
@@ -276,7 +276,7 @@ impl ECC_Fp
 		else
 		{
 			let lambda = 
-			if (prime_field::equalTo(P.x,Q.x))
+			if (primeField::equalTo(P.x,Q.x))
 			{
 				let x2 = self.Fp.mulElement(P.x, P.x); //x2 = x^2
 				let tx2 = self.Fp.addElement(x2, self.Fp.addElement(x2, x2)); // tx2 = 3x^2
@@ -343,7 +343,7 @@ impl ECC_Fp
 			y: yU64x4::new(0,0,0,0),
 		};
 
-		while (!prime_field::equalToOne(times))
+		while (!primeField::equalToOne(times))
 		{
 			if(times.value.0%2==0)
 			{
@@ -392,8 +392,8 @@ impl ECC_Fp
 		let s1 = self.Fp.mulElement(P.y,qz3);
 		let s2 = self.Fp.mulElement(Q.y,pz3);
 
-		prime_field::equalTo(u1,u2) &&
-		prime_field::equalTo(self.Fp.getAdditionInverseElement(s1),s2)
+		primeField::equalTo(u1,u2) &&
+		primeField::equalTo(self.Fp.getAdditionInverseElement(s1),s2)
 	}
 
 	pub fn addJacobPoint(&self, P: JacobPoint, Q: JacobPoint) -> JacobPoint
@@ -415,11 +415,11 @@ impl ECC_Fp
 			let lambda1 = self.Fp.mulElement(P.x,qz2); //
 			let lambda2 = self.Fp.mulElement(Q.x,pz2); //
 
-			if(prime_field::equalTo(lambda1,lambda2)) //P=Q)
+			if(primeField::equalTo(lambda1,lambda2)) //P=Q)
 			{
 				let lambda4 = self.Fp.mulElement(P.y,qz3); //
 				let lambda5 = self.Fp.mulElement(Q.y,pz3); //
-				if(prime_field::equalTo(lambda4,lambda5))
+				if(primeField::equalTo(lambda4,lambda5))
 				{
 					let lambda3 = self.Fp.subElement(lambda1,lambda2); //
 					let lambda6 = self.Fp.subElement(lambda4,lambda5); //
@@ -497,7 +497,7 @@ impl ECC_Fp
 			z: yU64x4::new(0,0,0,0),
 		};
 
-		while (!prime_field::equalToOne(times))
+		while (!primeField::equalToOne(times))
 		{
 			if(times.value.0%2==0)
 			{
@@ -562,7 +562,7 @@ impl ECC_Fp
 
 	fn bytes2Element(&self, x: yU64x4) -> yU64x4
 	{
-		assert!(prime_field::largerEqualThan(x,self.Fp.prime));
+		assert!(primeField::largerEqualThan(x,self.Fp.prime));
 
 		x
 	}

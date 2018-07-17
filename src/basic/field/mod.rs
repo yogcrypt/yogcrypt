@@ -1,4 +1,4 @@
-pub mod prime_field;
+pub mod primeField;
 pub mod power2_field;
 
 use ::basic::cell::yU64x4::*;

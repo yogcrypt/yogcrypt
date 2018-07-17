@@ -165,27 +165,27 @@ impl Neg for yU64x4
 
 	fn neg(self) -> yU64x4
 	{
-		let mut x = yU64x4::new(0,0,0,0);
+		let mut x = self;
 
-		if self.value.0!=0
+		if x.value.0!=0
 		{
 			x.value.0 = u64::wrapping_neg(x.value.0);
 			x.value.1 = !x.value.1;
 			x.value.2 = !x.value.2;
 			x.value.3 = !x.value.3;
 		}
-		else if self.value.1!=0
+		else if x.value.1!=0
 		{
 			x.value.1 = u64::wrapping_neg(x.value.1);
 			x.value.2 = !x.value.2;
 			x.value.3 = !x.value.3;
 		}
-		else if self.value.2!=0
+		else if x.value.2!=0
 		{
 			x.value.2 = u64::wrapping_neg(x.value.2);
 			x.value.3 = !x.value.3;
 		}
-		else if self.value.3!=0
+		else if x.value.3!=0
 		{
 			x.value.3 = u64::wrapping_neg(x.value.3);
 		}

@@ -1,6 +1,6 @@
 use ::basic::cell::yU64x4::*;
 use ::basic::group::EccGroup::*;
-use ::basic::field::prime_field::*;
+use ::basic::field::primeField::*;
 use ::basic::field::theField;
 use rand::random;
 use std::vec::Vec;
@@ -101,7 +101,7 @@ impl Sm2Cryptor
 	}
 
 	// len: the Msg length (words)
-	pub fn generateSignature(&self, Msg: &[u32], len: usize) -> (yU64x4, yU64x4)
+	pub fn genSign(&self, Msg: &[u32], len: usize) -> (yU64x4, yU64x4)
 	{
 		let Z = self.getZ(self.P);
 
@@ -111,14 +111,14 @@ impl Sm2Cryptor
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 		
 		let mut k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-		if(prime_field::largerEqualThan(k,self.Ecc.Fp.prime))
+		if(primeField::largerEqualThan(k,self.Ecc.Fp.prime))
 		{
 			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 		}
 
 		let mut P1 = self.Ecc.timesPoint(self.Ecc.G, k);
 
-		let mut Fn = prime_field::new(self.Ecc.n);
+		let mut Fn = primeField::new(self.Ecc.n);
 		e = Fn.transformToElement(e);
 		let mut r = Fn.addElement(e,P1.x);
 		let mut d = Fn.transformToElement(self.D);
@@ -129,38 +129,38 @@ impl Sm2Cryptor
 
 		let mut s = Fn.mulElement(Fn.getMultiplicationInverseElement(Fn.addElement(d,yU64x4::new(1,0,0,0))),Fn.subElement(k,Fn.mulElement(r,d)));
 
-		while(prime_field::equalToZero(r)||prime_field::equalToZero(Fn.addElement(r,k))||prime_field::equalToZero(s))
+		while(primeField::equalToZero(r)||primeField::equalToZero(Fn.addElement(r,k))||primeField::equalToZero(s))
 		{
 			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-			if(prime_field::largerEqualThan(k,self.Ecc.Fp.prime))
+			if(primeField::largerEqualThan(k,self.Ecc.Fp.prime))
 			{
 				k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 			}
 			P1 = self.Ecc.timesPoint(self.Ecc.G, k);
-			Fn = prime_field::new(self.Ecc.n);
+			Fn = primeField::new(self.Ecc.n);
 			r = Fn.addElement(e,P1.x);
 		}
 
 		(r, s)
 	}
 
-	pub fn verifySignature(&self, Msg: &[u32], len: usize, r: yU64x4, s: yU64x4, Pa: Point) -> bool
+	pub fn verSign(&self, Msg: &[u32], len: usize, r: yU64x4, s: yU64x4, Pa: Point) -> bool
 	{
-		if(prime_field::largerEqualThan(r,self.Ecc.n)||prime_field::equalToZero(r)) {return false;}
-		if(prime_field::largerEqualThan(s,self.Ecc.n)||prime_field::equalToZero(s)) {return false;}
+		if(primeField::largerEqualThan(r,self.Ecc.n)||primeField::equalToZero(r)) {return false;}
+		if(primeField::largerEqualThan(s,self.Ecc.n)||primeField::equalToZero(s)) {return false;}
 		let Za = self.getZ(Pa);
 		let M = [Msg, &Za].concat();
 
 		let E = sm3Enc(&M,(len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 
-		let Fn = prime_field::new(self.Ecc.n);
+		let Fn = primeField::new(self.Ecc.n);
 
-		if(prime_field::equalToZero(r)||prime_field::largerEqualThan(r,self.Ecc.n))
+		if(primeField::equalToZero(r)||primeField::largerEqualThan(r,self.Ecc.n))
 		{
 			return false;
 		}
-		if(prime_field::equalToZero(s)||prime_field::largerEqualThan(s,self.Ecc.n))
+		if(primeField::equalToZero(s)||primeField::largerEqualThan(s,self.Ecc.n))
 		{
 			return false;
 		}
@@ -173,7 +173,7 @@ impl Sm2Cryptor
 		let R = Fn.addElement(e1,x1);
 
 
-		if(prime_field::equalTo(R,r))
+		if(primeField::equalTo(R,r))
 		{
 			true
 		}
@@ -193,7 +193,7 @@ impl Sm2Cryptor
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 		
 		let mut k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-		if(prime_field::largerEqualThan(k,self.Ecc.Fp.prime))
+		if(primeField::largerEqualThan(k,self.Ecc.Fp.prime))
 		{
 			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 		}
@@ -203,7 +203,7 @@ impl Sm2Cryptor
 		let mut P1 = self.Ecc.jacobToAffine(P1Jacob);
 		let mut P2 = self.Ecc.timesPoint(self.Ecc.G, k);
 
-		let mut Fn = prime_field::new(self.Ecc.n);
+		let mut Fn = primeField::new(self.Ecc.n);
 		e = Fn.transformToElement(e);
 		let mut r = Fn.addElement(e,P1.x);
 		let mut d = Fn.transformToElement(self.D);
@@ -214,16 +214,16 @@ impl Sm2Cryptor
 
 		let mut s = Fn.mulElement(Fn.getMultiplicationInverseElement(Fn.addElement(d,yU64x4::new(1,0,0,0))),Fn.subElement(k,Fn.mulElement(r,d)));
 
-		while(prime_field::equalToZero(r)||prime_field::equalToZero(Fn.addElement(r,k))||prime_field::equalToZero(s))
+		while(primeField::equalToZero(r)||primeField::equalToZero(Fn.addElement(r,k))||primeField::equalToZero(s))
 		{
 			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-			if(prime_field::largerEqualThan(k,self.Ecc.Fp.prime))
+			if(primeField::largerEqualThan(k,self.Ecc.Fp.prime))
 			{
 				k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 			}
 			P1Jacob = self.Ecc.timesJacobPoint(GJacob, k);
 			P1 = self.Ecc.jacobToAffine(P1Jacob);
-			Fn = prime_field::new(self.Ecc.n);
+			Fn = primeField::new(self.Ecc.n);
 			r = Fn.addElement(e,P1.x);
 		}
 
@@ -232,21 +232,21 @@ impl Sm2Cryptor
 
 	pub fn verifySignatureJacob(&self, Msg: &[u32], len: usize, r: yU64x4, s: yU64x4, Pa: Point) -> bool
 	{
-		if(prime_field::largerEqualThan(r,self.Ecc.n)||prime_field::equalToZero(r)) {return false;}
-		if(prime_field::largerEqualThan(s,self.Ecc.n)||prime_field::equalToZero(s)) {return false;}
+		if(primeField::largerEqualThan(r,self.Ecc.n)||primeField::equalToZero(r)) {return false;}
+		if(primeField::largerEqualThan(s,self.Ecc.n)||primeField::equalToZero(s)) {return false;}
 		let Za = self.getZ(Pa);
 		let M = [Msg, &Za].concat();
 
 		let E = sm3Enc(&M,(len+8)*32);
 		let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
 
-		let Fn = prime_field::new(self.Ecc.n);
+		let Fn = primeField::new(self.Ecc.n);
 
-		if(prime_field::equalToZero(r)||prime_field::largerEqualThan(r,self.Ecc.n))
+		if(primeField::equalToZero(r)||primeField::largerEqualThan(r,self.Ecc.n))
 		{
 			return false;
 		}
-		if(prime_field::equalToZero(s)||prime_field::largerEqualThan(s,self.Ecc.n))
+		if(primeField::equalToZero(s)||primeField::largerEqualThan(s,self.Ecc.n))
 		{
 			return false;
 		}
@@ -263,7 +263,7 @@ impl Sm2Cryptor
 		let R = Fn.addElement(e1,x1);
 
 
-		if(prime_field::equalTo(R,r))
+		if(primeField::equalTo(R,r))
 		{
 			true
 		}
