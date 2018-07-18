@@ -7,27 +7,32 @@ use std::vec::Vec;
 use ::sm3::*;
 
 
-pub struct Sm2Cryptor
+pub struct Sm2
 {
 	pub Ecc: ECC_Fp,
 	pub P: Point, //public key
 	pub D: yU64x4, //private key
 }
 
-impl Sm2Cryptor
+impl Sm2
 {
-	pub fn new(a: yU64x4, b: yU64x4, p: yU64x4, x0: yU64x4, y0: yU64x4, n: yU64x4, D: yU64x4) -> Sm2Cryptor
+	pub fn new(a: yU64x4, b: yU64x4, p: yU64x4, x0: yU64x4, y0: yU64x4, n: yU64x4, D: yU64x4) -> Sm2
 	{
 		let ecc = ECC_Fp::new(a,b,p,x0,y0,n);
 		let p = ecc.timesPoint(ecc.G,D);
 
-		Sm2Cryptor
+		Sm2
 		{
 			Ecc: ecc,
 			P: p,
 			D,
 		}
-	}	
+	}
+
+	pub fn getPubKey(&self) -> Point
+	{
+		self.P
+	}
 
 	pub fn getZ(&self, Pa: Point) -> [u32;8]
 	{
@@ -183,7 +188,7 @@ impl Sm2Cryptor
 		}
 	}
 
-	pub fn generateSignatureJacob(&self, Msg: &[u32], len: usize) -> (yU64x4, yU64x4)
+	pub fn genSignJ(&self, Msg: &[u32], len: usize) -> (yU64x4, yU64x4)
 	{
 		let Z = self.getZ(self.P);
 
@@ -230,7 +235,7 @@ impl Sm2Cryptor
 		(r, s)
 	}
 
-	pub fn verifySignatureJacob(&self, Msg: &[u32], len: usize, r: yU64x4, s: yU64x4, Pa: Point) -> bool
+	pub fn verSignJ(&self, Msg: &[u32], len: usize, r: yU64x4, s: yU64x4, Pa: Point) -> bool
 	{
 		if(primeField::largerEqualThan(r,self.Ecc.n)||primeField::equalToZero(r)) {return false;}
 		if(primeField::largerEqualThan(s,self.Ecc.n)||primeField::equalToZero(s)) {return false;}
