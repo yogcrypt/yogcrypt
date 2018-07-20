@@ -401,12 +401,16 @@ impl primeField
 		OVERFLOWING_ADD!(x.value.2, y.value.2, res2, overflowFlag);
 		OVERFLOWING_ADD!(x.value.3, y.value.3, res3, overflowFlag);
 		
-
 		let mut m = yU64x4
 		{
 			value: (res0, res1, res2, res3),
 		};
 
 		(m,overflowFlag)
+	}
+
+	pub fn mul2(&self, x: yU64x4) -> yU64x4
+	{
+		x
 	}
 }
