@@ -70,7 +70,7 @@ impl Display for yU64x4
 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
 	{
-		write!(f, "{:016X}{:016X}{:016X}{:016X}", self.value.3, self.value.2, self.value.1, self.value.0)
+		write!(f, "{:016X} {:016X} {:016X} {:016X}", self.value.3, self.value.2, self.value.1, self.value.0)
 	}
 }
 
