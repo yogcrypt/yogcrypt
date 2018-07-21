@@ -33,7 +33,7 @@ yU64x4
 const inv2: yU64x4 = 
 yU64x4
 {
-	value: (0x0000000000000000, 0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF, 0x7FFFFFFF7FFFFFFF),
+	value: (0x8000000000000000, 0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF, 0x7FFFFFFF7FFFFFFF),
 };
 
 const a: yU64x4 = 
@@ -308,7 +308,7 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 	let GJacob = Eccp.affineToJacob(Eccp.G);
 	let mut P1Jacob = Eccp.timesJacobPoint(GJacob, k);
 	let mut P1 = Eccp.jacobToAffine(P1Jacob);
-	let mut P2 = Eccp.timesPoint(Eccp.G, k);
+	let mut P2 = Eccp.timesPoint(Eccp.G,k);
 
 	let mut Fn = primeField::new(Eccp.n);
 	e = Fn.transformToElement(e);
@@ -537,7 +537,13 @@ impl Sm2
 		}
 
 		let t = Fn.addElement(r,s);
-		let P1 = self.Ecc.addPoint(self.Ecc.timesPoint(self.Ecc.G,s),self.Ecc.timesPoint(Pa,t));
+
+		let Aj = self.Ecc.timesJacobPoint(self.Ecc.affineToJacob(self.Ecc.G),s);
+		let Bj = self.Ecc.timesJacobPoint(self.Ecc.affineToJacob(Pa), t);
+		let A = self.Ecc.jacobToAffine(Aj);
+		let B = self.Ecc.jacobToAffine(Bj);
+
+		let P1 = self.Ecc.addPoint(A, B);
 
 		let e1 = Fn.transformToElement(e);
 		let x1 = Fn.transformToElement(P1.x);
@@ -572,7 +578,6 @@ impl Sm2
 		let GJacob = self.Ecc.affineToJacob(self.Ecc.G);
 		let mut P1Jacob = self.Ecc.timesJacobPoint(GJacob, k);
 		let mut P1 = self.Ecc.jacobToAffine(P1Jacob);
-		let mut P2 = self.Ecc.timesPoint(self.Ecc.G, k);
 
 		let mut Fn = primeField::new(self.Ecc.n);
 		e = Fn.transformToElement(e);

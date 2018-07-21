@@ -408,18 +408,18 @@ impl ECC_Fp
 		}
 		else
 		{
-			let pz2 = self.Fp.mulElement(P.z,P.z); //
-			let qz2 = self.Fp.mulElement(Q.z,Q.z); //
-			let pz3 = self.Fp.mulElement(pz2,P.z); //
+			let pz2 = self.Fp.mulElement(P.z,P.z); // pz2 = pz^2
+			let qz2 = self.Fp.mulElement(Q.z,Q.z); // qz2 = qz^2
+			let pz3 = self.Fp.mulElement(pz2,P.z); // pz3
 			let qz3 = self.Fp.mulElement(qz2,Q.z); //
 			let lambda1 = self.Fp.mulElement(P.x,qz2); //
 			let lambda2 = self.Fp.mulElement(Q.x,pz2); //
 
-			if(primeField::equalTo(lambda1,lambda2)) //P=Q)
+			if(!primeField::equalTo(lambda1,lambda2)) //P!=Q
 			{
 				let lambda4 = self.Fp.mulElement(P.y,qz3); //
 				let lambda5 = self.Fp.mulElement(Q.y,pz3); //
-				if(primeField::equalTo(lambda4,lambda5))
+				if(!primeField::equalTo(lambda4,lambda5))
 				{
 					let lambda3 = self.Fp.subElement(lambda1,lambda2); //
 					let lambda6 = self.Fp.subElement(lambda4,lambda5); //
@@ -428,14 +428,14 @@ impl ECC_Fp
 					let l6l6 = self.Fp.mulElement(lambda6,lambda6); //
 					let l7l3l3 = self.Fp.mulElement(lambda7,self.Fp.mulElement(lambda3,lambda3)); //
 					let x = self.Fp.subElement(l6l6,l7l3l3); //
-					let lambda9 = self.Fp.subElement(l7l3l3,self.Fp.addElement(x,x)); //
+					let lambda9 = self.Fp.subElement(l7l3l3,self.Fp.addElement(x,x)); // l9 = l7l3l3 - 2x
 					let l9l6 = self.Fp.mulElement(lambda9,lambda6); //
 					let l8l3l3 = self.Fp.mulElement(lambda8,self.Fp.mulElement(lambda3,lambda3)); //
 
 					let l8l3l3l3 = self.Fp.mulElement(l8l3l3,lambda3);
 					let mut y = self.Fp.subElement(l9l6,l8l3l3l3); //
 					y = self.Fp.mulElement(y, self.Fp.inv2); //
-					let z = self.Fp.mulElement(self.Fp.mulElement(P.z, Q.z),lambda3); 		
+					let z = self.Fp.mulElement(self.Fp.mulElement(P.z, Q.z),lambda3); 	
 
 					JacobPoint
 					{
@@ -454,7 +454,7 @@ impl ECC_Fp
 					}
 				}
 			}
-			else //P!=Q
+			else //P=Q
 			{
 				let px2 = self.Fp.mulElement(P.x, P.x); // px2 = px^2 
 				//let pz2 = self.Fp.mulElement(P.z, P.z); // pz2 = pz^2

@@ -32,8 +32,6 @@ impl primeField
 	pub fn new(prime: yU64x4) -> primeField
 	{
 		let mut inv2 = prime;
-		inv2.value.0 += 1;
-		inv2.rightShift1();
 
 		let mut field = primeField
 		{
@@ -74,6 +72,11 @@ impl primeField
 				field.rho2 = field.rho2 - prime;
 			}
 		}
+
+		let (inv, b) = field.addElementNoMod(inv2, yU64x4::new(1,0,0,0));
+		inv2 = inv;
+		inv2.rightShift1();
+		field.inv2 = inv2;
 
 		field
 	}
@@ -409,8 +412,14 @@ impl primeField
 		(m,overflowFlag)
 	}
 
-	pub fn mul2(&self, x: yU64x4) -> yU64x4
+	pub fn div2(&self, mut x: yU64x4) -> yU64x4
 	{
+		if(x.value.0%2==1)
+		{
+			x = self.addElement(x, self.prime);
+		}
+		x.rightShift1();
+
 		x
 	}
 }
