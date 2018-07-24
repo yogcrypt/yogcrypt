@@ -1,6 +1,6 @@
-use ::basic::cell::yU64x4::*;
-use ::basic::field::theField;
-use ::basic::field::primeField::*;
+use ::basic::cell::yU64x4::{equalTo, equalToOne, equalToZero, yU64x4};
+use ::basic::field::Fp::*;
+use ::basic::field::Fn::n;
 
 use std::fmt;
 use std::fmt::Display;
@@ -8,10 +8,17 @@ use std::fmt::Display;
 use std::vec::Vec;
 use bit_vec::BitVec;
 
-trait ECC 
-{
+pub const a: yU64x4 = yU64x4{value: (0xFFFFFFFFFFFFFFFC, 0xFFFFFFFF00000000, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF),};
+pub const b: yU64x4 = yU64x4{value: (0xDDBCBD414D940E93, 0xF39789F515AB8F92, 0x4D5A9E4BCF6509A7, 0x28E9FA9E9D9F5E34),};
+pub const Gx: yU64x4 = yU64x4{value: (0x715A4589334C74C7, 0x8FE30BBFF2660BE1, 0x5F9904466A39C994, 0x32C4AE2C1F198119),};
+pub const Gy: yU64x4 = yU64x4{value: (0x02DF32E52139F0A0, 0xD0A9877CC62A4740, 0x59BDCEE36B692153, 0xBC3736A2F4F6779C),};
 
-}
+pub const G: Point = 
+Point
+{
+	x: Gx,
+	y: Gy,
+};
 
 #[derive(Copy, Clone)]
 pub struct Point
@@ -72,6 +79,19 @@ impl Point
 	}
 }
 
+impl ProjPoint
+{
+	pub fn new(x: yU64x4, y: yU64x4, z: yU64x4) -> ProjPoint
+	{
+		ProjPoint
+		{
+			x,
+			y,
+			z,
+		}
+	}
+}
+
 impl JacobPoint
 {
 	pub fn new(x: yU64x4, y: yU64x4, z: yU64x4) -> JacobPoint
@@ -89,394 +109,280 @@ pub struct ECC_Fp
 {
 	pub a: yU64x4,
 	pub b: yU64x4,
-	pub Fp: primeField,
 	pub G: Point,
-	pub l: u32, //the byte length of p
-	pub EFp: yU64x4, // order of ECC_Fp
 	pub n: yU64x4, // order of G
 }
 
-impl ECC_Fp
+fn pointEqualToO(P: Point) -> bool
 {
-	fn pointEqualToO(&self, P: Point) -> bool
+	equalToZero(P.x) && equalToZero(P.y)
+}
+
+fn pointEqualTo(P: Point, Q: Point) -> bool
+{
+	equalTo(P.x,Q.x) && equalTo(P.y, Q.y)
+}
+
+fn projPointEqualToO(P: ProjPoint) -> bool
+{
+	equalToZero(P.x) && equalToOne(P.y) && equalToZero(P.z)
+}
+
+fn projPointEqualTo(P: ProjPoint, Q: ProjPoint) -> bool
+{
+	let u = mul(P.z, getMulInv(Q.z)); //u=z1*(z2^-1)
+
+	//return x1==x2*u && y1==y2*u
+	equalTo(P.x, mul(Q.x,u)) && equalTo(P.y, mul(Q.y,u))
+}
+
+fn jacobPointEqualToO(P: JacobPoint) -> bool
+{ 
+	equalToOne(P.x) && equalToOne(P.y) && equalToZero(P.z)
+}
+
+fn jacobPointEuqalTo(P: JacobPoint, Q: JacobPoint) -> bool
+{
+	let pz2 = mul(P.z,P.z);
+	let pz3 = mul(pz2,P.z);
+	let qz2 = mul(Q.z,Q.z);
+	let qz3 = mul(qz2,Q.z);
+
+	let u1 = mul(P.x,qz2);
+	let u2 = mul(Q.x,pz2);
+	let s1 = mul(P.y,qz3);
+	let s2 = mul(Q.y,pz3);
+	//return x1==x2*u^2 && y1==y2*u^3
+	equalTo(u1,u2) && equalTo(s1,s2)
+}
+
+pub fn affineToProj(P: Point) -> ProjPoint
+{
+	ProjPoint
 	{
-		primeField::equalToZero(P.x) && primeField::equalToZero(P.y)
-	}
-
-	fn pointEqualTo(&self, P: Point, Q: Point) -> bool
-	{
-		primeField::equalTo(P.x,Q.x) && primeField::equalTo(P.y, Q.y)
-	}
-
-	fn projPointEqualToO(&self, P: ProjPoint) -> bool
-	{
-		primeField::equalToZero(P.x) && primeField::equalToOne(P.y) && primeField::equalToZero(P.z)
-	}
-
-	fn projPointEqualTo(&self, P: ProjPoint, Q: ProjPoint) -> bool
-	{
-		let u = self.Fp.mulElement(P.z,self.Fp.getMultiplicationInverseElement(Q.z)); //u=z1*(z2^-1)
-
-		//return x1==x2*u && y1==y2*u
-		primeField::equalTo(P.x,self.Fp.mulElement(Q.x,u)) && primeField::equalTo(P.y,self.Fp.mulElement(Q.y,u))
-	}
-
-	fn jacobPointEqualToO(&self, P: JacobPoint) -> bool
-	{ 
-		primeField::equalToOne(P.x) && primeField::equalToOne(P.y) && primeField::equalToZero(P.z)
-	}
-
-	fn jacobPointEuqalTo(&self, P: JacobPoint, Q: JacobPoint) -> bool
-	{
-		let pz2 = self.Fp.mulElement(P.z,P.z);
-		let pz3 = self.Fp.mulElement(pz2,P.z);
-		let qz2 = self.Fp.mulElement(Q.z,Q.z);
-		let qz3 = self.Fp.mulElement(qz2,Q.z);
-
-		let u1 = self.Fp.mulElement(P.x,qz2);
-		let u2 = self.Fp.mulElement(Q.x,pz2);
-		let s1 = self.Fp.mulElement(P.y,qz3);
-		let s2 = self.Fp.mulElement(Q.y,pz3);
-		//return x1==x2*u^2 && y1==y2*u^3
-		primeField::equalTo(u1,u2) && primeField::equalTo(s1,s2)
-	}
-
-	pub fn affineToProj(&self, P: Point) -> ProjPoint
-	{
-		ProjPoint
-		{
-			x: P.x,
-			y: P.y,
-			z: yU64x4::new(1,0,0,0),
-		}
-	}
-
-	pub fn affineToJacob(&self, P: Point) -> JacobPoint
-	{
-		JacobPoint
-		{
-			x: P.x,
-			y: P.y,
-			z: yU64x4::new(1,0,0,0),
-		}
-	}
-
-	pub fn projToAffine(&self, P: ProjPoint) -> Point
-	{
-		let u = self.Fp.getMultiplicationInverseElement(P.z);
-
-		Point
-		{
-			x: self.Fp.mulElement(P.x,u),
-			y: self.Fp.mulElement(P.y,u),
-		}
-	}
-
-	pub fn projToJacob(&self, P: ProjPoint) -> JacobPoint
-	{
-		let u = self.Fp.getMultiplicationInverseElement(P.z);
-
-		JacobPoint
-		{
-			x: self.Fp.mulElement(P.x,u),
-			y: self.Fp.mulElement(P.y,u),
-			z: yU64x4::new(1,0,0,0),
-		}
-	}
-
-	pub fn jacobToAffine(&self, P: JacobPoint) -> Point
-	{
-		let u = self.Fp.getMultiplicationInverseElement(P.z);
-		let u2 = self.Fp.mulElement(u,u);
-		let u3 = self.Fp.mulElement(u2,u);
-
-		Point
-		{
-			x: self.Fp.mulElement(P.x,u2),
-			y: self.Fp.mulElement(P.y,u3),
-		}
-	}
-
-	pub fn jacobToProj(&self, P: JacobPoint) -> ProjPoint
-	{
-				let u = self.Fp.getMultiplicationInverseElement(P.z);
-		let u2 = self.Fp.mulElement(u,u);
-		let u3 = self.Fp.mulElement(u2,u);
-
-		ProjPoint
-		{
-			x: self.Fp.mulElement(P.x,u2),
-			y: self.Fp.mulElement(P.y,u3),
-			z: yU64x4::new(1,0,0,0),
-		}
+		x: P.x,
+		y: P.y,
+		z: yU64x4::new(1,0,0,0),
 	}
 }
 
-impl ECC_Fp
+pub fn affineToJacob(P: Point) -> JacobPoint
 {
-	// Create a Ecc(Fp): y^2 = x^3 + ax + b
-	pub fn new(a: yU64x4, b: yU64x4, p: yU64x4, x0: yU64x4, y0: yU64x4, n: yU64x4) -> ECC_Fp
+	JacobPoint
 	{
-		ECC_Fp
-		{
-			a,
-			b,
-			Fp: primeField::new(p),
-			G: Point::new(x0,y0),
-			l: 32,
-			EFp: yU64x4::new(0,0,0,0),
-			n,
-		}
+		x: P.x,
+		y: P.y,
+		z: yU64x4::new(1,0,0,0),
 	}
 }
 
-// Caculations on affine coordinate
-impl ECC_Fp
+pub fn projToAffine(P: ProjPoint) -> Point
 {
-	pub fn isPointInGroup(&self, P: Point) -> bool
+	let u = getMulInv(P.z);
+
+	Point
 	{
-		let left = self.Fp.addElement(self.Fp.mulElement(self.Fp.addElement(self.Fp.mulElement(P.x,P.x),self.a),P.x),self.b);
-		let right = self.Fp.mulElement(P.y,P.y);
-
-		primeField::equalTo(left,right)
+		x: mul(P.x,u),
+		y: mul(P.y,u),
 	}
+}
 
-	pub fn getInvPoint(&self, P: Point) -> Point
+pub fn projToJacob(P: ProjPoint) -> JacobPoint
+{
+	let u = getMulInv(P.z);
+
+	JacobPoint
+	{
+		x: mul(P.x,u),
+		y: mul(P.y,u),
+		z: yU64x4::new(1,0,0,0),
+	}
+}
+
+pub fn jacobToAffine(P: JacobPoint) -> Point
+{
+	let u = getMulInv(P.z);
+	let u2 = mul(u,u);
+	let u3 = mul(u2,u);
+
+	Point
+	{
+		x: mul(P.x,u2),
+		y: mul(P.y,u3),
+	}
+}
+
+pub fn jacobToProj(P: JacobPoint) -> ProjPoint
+{
+	let u = getMulInv(P.z);
+	let u2 = mul(u,u);
+	let u3 = mul(u2,u);
+
+	ProjPoint
+	{
+		x: mul(P.x,u2),
+		y: mul(P.y,u3),
+		z: yU64x4::new(1,0,0,0),
+	}
+}
+
+pub fn getInvPoint(P: Point) -> Point
+{
+	Point
+	{
+		x: P.x,
+		y: getAddInv(P.y),
+	}
+}
+
+pub fn isPointRec(P: Point, Q: Point) -> bool
+{
+	return equalTo(P.x,Q.x) && equalTo(P.y, getAddInv(Q.y))
+}
+
+pub fn addPoint(P: Point, Q: Point) -> Point
+{
+	if (pointEqualToO(P)||pointEqualToO(Q))
 	{
 		Point
 		{
-			x: P.x,
-			y: self.Fp.getAdditionInverseElement(P.y),
+			x: P.x + Q.x,
+			y: P.y + Q.y,
 		}
 	}
-
-	pub fn isReciprocal(&self, P: Point, Q: Point) -> bool
+	else if (isPointRec(P, Q))
 	{
-		return primeField::equalTo(P.x,Q.x) && primeField::equalTo(P.y, self.Fp.getAdditionInverseElement(Q.y))
-	}
-
-	pub fn addPoint(&self, P: Point, Q: Point) -> Point
-	{
-		if (self.pointEqualToO(P)||self.pointEqualToO(Q))
-		{
-			Point
-			{
-				x: P.x + Q.x,
-				y: P.y + Q.y,
-			}
-		}
-		else if (self.isReciprocal(P, Q))
-		{
-			Point
-			{
-				x: yU64x4::new(0,0,0,0),
-				y: yU64x4::new(0,0,0,0),
-			}
-		}
-		else
-		{
-			let lambda = 
-			if (primeField::equalTo(P.x,Q.x))
-			{
-				let x2 = self.Fp.mulElement(P.x, P.x); //x2 = x^2
-				let tx2 = self.Fp.addElement(x2, self.Fp.addElement(x2, x2)); // tx2 = 3x^2
-				let dx = self.Fp.addElement(tx2, self.a); // dx = 3x^2+a;
-				let dy = self.Fp.addElement(P.y,P.y);
-				let dyi = self.Fp.getMultiplicationInverseElement(dy);
-				self.Fp.divElement(dx,dy)	 //= (3x^2+a)/2y
-				
-			}	
-			else 
-			{
-				let s1 = self.Fp.subElement(Q.y,P.y);
-				let s2 = self.Fp.subElement(Q.x,P.x);
-				self.Fp.divElement(s1,s2)
-			};
-
-			let lambda2 = self.Fp.mulElement(lambda, lambda);
-
-			let X = self.Fp.subElement(lambda2, self.Fp.addElement(P.x, Q.x));
-			let Y = self.Fp.subElement(self.Fp.mulElement(lambda, self.Fp.subElement(P.x,X)),P.y);
-
-			Point
-			{
-				x: X,
-				y: Y,
-			}
-		}
-	}
-
-	pub fn doublePoint(&self, P: Point) -> Point
-	{
-		if (self.pointEqualToO(P))
-		{
-			Point
-			{
-				x: yU64x4::new(0,0,0,0),
-				y: yU64x4::new(0,0,0,0),
-			}
-		}
-		else 
-		{
-			let x2 = self.Fp.mulElement(P.x, P.x);
-			let tx2 = self.Fp.addElement(x2, self.Fp.addElement(x2, x2));
-			let lambda = self.Fp.divElement(self.Fp.subElement(tx2, self.a),self.Fp.addElement(P.y,P.y));
-
-			let lambda2 = self.Fp.mulElement(lambda, lambda);
-
-			let X = self.Fp.subElement(lambda2, self.Fp.addElement(P.x, P.x));
-			let Y = self.Fp.subElement(self.Fp.mulElement(lambda, self.Fp.subElement(P.x,X)),P.y);
-
-			Point
-			{
-				x: X,
-				y: Y,
-			}
-		}
-	}
-
-	pub fn timesPoint(&self, mut P: Point, mut times: yU64x4) -> Point
-	{
-		let mut T = Point
+		Point
 		{
 			x: yU64x4::new(0,0,0,0),
 			y: yU64x4::new(0,0,0,0),
+		}
+	}
+	else
+	{
+		let lambda = 
+		if (equalTo(P.x,Q.x))
+		{
+			let x2 = mul(P.x, P.x); //x2 = x^2
+			let tx2 = add(x2, add(x2, x2)); // tx2 = 3x^2
+			let dx = add(tx2, a); // dx = 3x^2+a;
+			let dy = add(P.y,P.y);
+			let dyi = getMulInv(dy);
+			div(dx,dy)	 //= (3x^2+a)/2y
+			
+		}	
+		else 
+		{
+			let s1 = sub(Q.y,P.y);
+			let s2 = sub(Q.x,P.x);
+			div(s1,s2)
 		};
 
-		while (!primeField::equalToOne(times))
-		{
-			if(times.value.0%2==0)
-			{
-				times.rightShift1();
-				P = self.addPoint(P,P);
-			}
-			else 
-			{
-				times.value.0 -= 1;
-				T = self.addPoint(T,P);	
-			}
-		}
+		let lambda2 = mul(lambda, lambda);
 
-		self.addPoint(P,T)
+		let X = sub(lambda2, add(P.x, Q.x));
+		let Y = sub(mul(lambda, sub(P.x,X)),P.y);
+
+		Point
+		{
+			x: X,
+			y: Y,
+		}
 	}
 }
 
-// Calculations on Projective Coordinate
-impl ECC_Fp
+pub fn timesPoint(mut P: Point, mut times: yU64x4) -> Point
 {
+	let mut T = Point
+	{
+		x: yU64x4::new(0,0,0,0),
+		y: yU64x4::new(0,0,0,0),
+	};
 
+	while (!equalToOne(times))
+	{
+		if(times.value.0%2==0)
+		{
+			times.rightShift1();
+			P = addPoint(P,P);
+		}
+		else 
+		{
+			times.value.0 -= 1;
+			T = addPoint(T,P);	
+		}
+	}
+
+	addPoint(P,T)
 }
 
-// Calculations on Jacobian Projective Coordinate
-impl ECC_Fp
+
+pub fn getInvJacobPoint(P: JacobPoint) -> JacobPoint
 {
-	pub fn getInvJacobPoint(&self, P: JacobPoint) -> JacobPoint
+	JacobPoint
 	{
-		JacobPoint
-		{
-			x: P.x,
-			y: self.Fp.getAdditionInverseElement(P.y),
-			z: P.z,
-		}
+		x: P.x,
+		y: getAddInv(P.y),
+		z: P.z,
 	}
+}
 
-	pub fn isJacobReciprocal(&self, P: JacobPoint, Q: JacobPoint) -> bool
+pub fn isJacobReciprocal(P: JacobPoint, Q: JacobPoint) -> bool
+{
+	let pz2 = mul(P.z,P.z);
+	let pz3 = mul(pz2,P.z);
+	let qz2 = mul(Q.z,Q.z);
+	let qz3 = mul(qz2,Q.z);
+
+	let u1 = mul(P.x,qz2);
+	let u2 = mul(Q.x,pz2);
+	let s1 = mul(P.y,qz3);
+	let s2 = mul(Q.y,pz3);
+
+	equalTo(u1,u2) &&
+	equalTo(getAddInv(s1),s2)
+}
+
+pub fn addJacobPoint(P: JacobPoint, Q: JacobPoint) -> JacobPoint
+{
+	if(jacobPointEqualToO(P))
 	{
-		let pz2 = self.Fp.mulElement(P.z,P.z);
-		let pz3 = self.Fp.mulElement(pz2,P.z);
-		let qz2 = self.Fp.mulElement(Q.z,Q.z);
-		let qz3 = self.Fp.mulElement(qz2,Q.z);
-
-		let u1 = self.Fp.mulElement(P.x,qz2);
-		let u2 = self.Fp.mulElement(Q.x,pz2);
-		let s1 = self.Fp.mulElement(P.y,qz3);
-		let s2 = self.Fp.mulElement(Q.y,pz3);
-
-		primeField::equalTo(u1,u2) &&
-		primeField::equalTo(self.Fp.getAdditionInverseElement(s1),s2)
+		Q
 	}
-
-	pub fn addJacobPoint(&self, P: JacobPoint, Q: JacobPoint) -> JacobPoint
+	else if(jacobPointEqualToO(Q))
 	{
-		if(self.jacobPointEqualToO(P))
-		{
-			Q
-		}
-		else if(self.jacobPointEqualToO(Q))
-		{
-			P
-		}
-		else
-		{
-			let pz2 = self.Fp.mulElement(P.z,P.z); // pz2 = pz^2
-			let qz2 = self.Fp.mulElement(Q.z,Q.z); // qz2 = qz^2
-			let pz3 = self.Fp.mulElement(pz2,P.z); // pz3
-			let qz3 = self.Fp.mulElement(qz2,Q.z); //
-			let lambda1 = self.Fp.mulElement(P.x,qz2); //
-			let lambda2 = self.Fp.mulElement(Q.x,pz2); //
+		P
+	}
+	else
+	{
+		let pz2 = mul(P.z,P.z); // pz2 = pz^2
+		let qz2 = mul(Q.z,Q.z); // qz2 = qz^2
+		let pz3 = mul(pz2,P.z); // pz3
+		let qz3 = mul(qz2,Q.z); //
+		let lambda1 = mul(P.x,qz2); //
+		let lambda2 = mul(Q.x,pz2); //
 
-			if(!primeField::equalTo(lambda1,lambda2)) //P!=Q
+		if(!equalTo(lambda1,lambda2)) //P!=Q
+		{
+			let lambda4 = mul(P.y,qz3); //
+			let lambda5 = mul(Q.y,pz3); //
+			if(!equalTo(lambda4,lambda5))
 			{
-				let lambda4 = self.Fp.mulElement(P.y,qz3); //
-				let lambda5 = self.Fp.mulElement(Q.y,pz3); //
-				if(!primeField::equalTo(lambda4,lambda5))
-				{
-					let lambda3 = self.Fp.subElement(lambda1,lambda2); //
-					let lambda6 = self.Fp.subElement(lambda4,lambda5); //
-					let lambda7 = self.Fp.addElement(lambda1,lambda2); //
-					let lambda8 = self.Fp.addElement(lambda4,lambda5); //
-					let l6l6 = self.Fp.mulElement(lambda6,lambda6); //
-					let l7l3l3 = self.Fp.mulElement(lambda7,self.Fp.mulElement(lambda3,lambda3)); //
-					let x = self.Fp.subElement(l6l6,l7l3l3); //
-					let lambda9 = self.Fp.subElement(l7l3l3,self.Fp.addElement(x,x)); // l9 = l7l3l3 - 2x
-					let l9l6 = self.Fp.mulElement(lambda9,lambda6); //
-					let l8l3l3 = self.Fp.mulElement(lambda8,self.Fp.mulElement(lambda3,lambda3)); //
+				let lambda3 = sub(lambda1,lambda2); //
+				let lambda6 = sub(lambda4,lambda5); //
+				let lambda7 = add(lambda1,lambda2); //
+				let lambda8 = add(lambda4,lambda5); //
+				let l6l6 = mul(lambda6,lambda6); //
+				let l7l3l3 = mul(lambda7,mul(lambda3,lambda3)); //
+				let x = sub(l6l6,l7l3l3); //
+				let lambda9 = sub(l7l3l3,add(x,x)); // l9 = l7l3l3 - 2x
+				let l9l6 = mul(lambda9,lambda6); //
+				let l8l3l3 = mul(lambda8,mul(lambda3,lambda3)); //
 
-					let l8l3l3l3 = self.Fp.mulElement(l8l3l3,lambda3);
-					let mut y = self.Fp.subElement(l9l6,l8l3l3l3); //
-					y = self.Fp.mulElement(y, self.Fp.inv2); //
-					let z = self.Fp.mulElement(self.Fp.mulElement(P.z, Q.z),lambda3); 	
-
-					JacobPoint
-					{
-						x,
-						y,
-						z,
-					}
-				}
-				else 
-				{
-					JacobPoint
-					{
-						x: yU64x4::new(1,0,0,0),
-						y: yU64x4::new(1,0,0,0),
-						z: yU64x4::new(0,0,0,0),
-					}
-				}
-			}
-			else //P=Q
-			{
-				let px2 = self.Fp.mulElement(P.x, P.x); // px2 = px^2 
-				//let pz2 = self.Fp.mulElement(P.z, P.z); // pz2 = pz^2
-				let pz4 = self.Fp.mulElement(pz2, pz2);	// pz4 = pz^4
-				let px2_2 = self.Fp.addElement(px2,px2); // px2_2 = 2px^2
-				let px2_3 = self.Fp.addElement(px2_2,px2); // px2_3 = 3px^2
-				let lambda1 = self.Fp.addElement(px2_3,self.Fp.mulElement(self.a,pz4));
-					// l1 = 3*px^2+a*pz^4
-				let py2 = self.Fp.mulElement(P.y,P.y); // py2 = py^2
-				let py_2 = self.Fp.addElement(P.y,P.y); // py_2 = 2*py
-				let py2_2 = self.Fp.addElement(py2, py2); // py2_2 = 2*py^2
-				let py2_4 = self.Fp.addElement(py2_2, py2_2); // py2_4 = 4*py^2
-				let lambda2 = self.Fp.mulElement(py2_4,P.x); // l2 = 4*px*py^2
-				let l2_2 = self.Fp.addElement(lambda2,lambda2); // l2 = 2*l2
-				let py4_4 = self.Fp.mulElement(py2_2,py2_2); // py4_4 = 4*py^4
-				let lambda3 = self.Fp.addElement(py4_4, py4_4); // l3 = 8^py^4
-				let l1l1 = self.Fp.mulElement(lambda1, lambda1); // l1l1 = l1^2
-				let x = self.Fp.subElement(l1l1, l2_2); // x3 = l1^2 - 2*l2
-				let m1 = self.Fp.subElement(lambda2,x); // m1 = l2 - x3
-				let m2 = self.Fp.mulElement(lambda1,m1); // m2 = l1*(l2-x3)
-				let y = self.Fp.subElement(m2,lambda3); // y = l1*(l2-x3)-l3
-				let z = self.Fp.mulElement(py_2,P.z); // z = 2*py*pz
+				let l8l3l3l3 = mul(l8l3l3,lambda3);
+				let mut y = sub(l9l6,l8l3l3l3); //
+				y = mul(y, inv2P); //
+				let z = mul(mul(P.z, Q.z),lambda3); 	
 
 				JacobPoint
 				{
@@ -485,32 +391,72 @@ impl ECC_Fp
 					z,
 				}
 			}
-		}
-	}
-
-	pub fn timesJacobPoint(&self, mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
-	{
-		let mut T = JacobPoint
-		{
-			x: yU64x4::new(1,0,0,0),
-			y: yU64x4::new(1,0,0,0),
-			z: yU64x4::new(0,0,0,0),
-		};
-
-		while (!primeField::equalToOne(times))
-		{
-			if(times.value.0%2==0)
-			{
-				times.rightShift1();
-				P = self.addJacobPoint(P,P);
-			}
 			else 
 			{
-				times.value.0 -= 1;
-				T = self.addJacobPoint(T,P);	
+				JacobPoint
+				{
+					x: yU64x4::new(1,0,0,0),
+					y: yU64x4::new(1,0,0,0),
+					z: yU64x4::new(0,0,0,0),
+				}
 			}
 		}
+		else //P=Q
+		{
+			let px2 = mul(P.x, P.x); // px2 = px^2 
+			//let pz2 = mul(P.z, P.z); // pz2 = pz^2
+			let pz4 = mul(pz2, pz2);	// pz4 = pz^4
+			let px2_2 = add(px2,px2); // px2_2 = 2px^2
+			let px2_3 = add(px2_2,px2); // px2_3 = 3px^2
+			let lambda1 = add(px2_3,mul(a,pz4));
+				// l1 = 3*px^2+a*pz^4
+			let py2 = mul(P.y,P.y); // py2 = py^2
+			let py_2 = add(P.y,P.y); // py_2 = 2*py
+			let py2_2 = add(py2, py2); // py2_2 = 2*py^2
+			let py2_4 = add(py2_2, py2_2); // py2_4 = 4*py^2
+			let lambda2 = mul(py2_4,P.x); // l2 = 4*px*py^2
+			let l2_2 = add(lambda2,lambda2); // l2 = 2*l2
+			let py4_4 = mul(py2_2,py2_2); // py4_4 = 4*py^4
+			let lambda3 = add(py4_4, py4_4); // l3 = 8^py^4
+			let l1l1 = mul(lambda1, lambda1); // l1l1 = l1^2
+			let x = sub(l1l1, l2_2); // x3 = l1^2 - 2*l2
+			let m1 = sub(lambda2,x); // m1 = l2 - x3
+			let m2 = mul(lambda1,m1); // m2 = l1*(l2-x3)
+			let y = sub(m2,lambda3); // y = l1*(l2-x3)-l3
+			let z = mul(py_2,P.z); // z = 2*py*pz
 
-		self.addJacobPoint(P,T)
+			JacobPoint
+			{
+				x,
+				y,
+				z,
+			}
+		}
 	}
+}
+
+pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
+{
+	let mut T = JacobPoint
+	{
+		x: yU64x4::new(1,0,0,0),
+		y: yU64x4::new(1,0,0,0),
+		z: yU64x4::new(0,0,0,0),
+	};
+
+	while (!equalToOne(times))
+	{
+		if(times.value.0%2==0)
+		{
+			times.rightShift1();
+			P = addJacobPoint(P,P);
+		}
+		else 
+		{
+			times.value.0 -= 1;
+			T = addJacobPoint(T,P);	
+		}
+	}
+
+	addJacobPoint(P,T)
 }

@@ -372,3 +372,54 @@ impl yU64x4
 		arr
 	}
 }
+
+pub fn largerEqualThan(x: yU64x4, y: yU64x4) -> bool
+{
+	if(x.value.3>y.value.3) {return true;};
+	if(x.value.3<y.value.3) {return false;};
+	if(x.value.2>y.value.2) {return true;};
+	if(x.value.2<y.value.2) {return false;};
+	if(x.value.1>y.value.1) {return true;};
+	if(x.value.1<y.value.1) {return false;};
+	if(x.value.0>=y.value.0) {return true;};
+	return false;
+}
+
+pub fn equalTo(x: yU64x4, y: yU64x4) -> bool
+{
+	x.value.0==y.value.0 && x.value.1==y.value.1 && x.value.2==y.value.2 && x.value.3==y.value.3
+}
+
+pub fn equalToZero(x: yU64x4) -> bool
+{
+	x.value.0==0 && x.value.1==0 && x.value.2==0 && x.value.3==0
+}
+
+pub fn equalToOne(x: yU64x4) -> bool
+{
+	x.value.0==1 && x.value.1==0 && x.value.2==0 && x.value.3==0
+}
+
+pub const zero: yU64x4 =  yU64x4{value:(0,0,0,0)};
+
+
+pub fn addNoMod(x: yU64x4, y: yU64x4) -> (yU64x4,bool)
+{
+    let res0: u64;
+    let res1: u64;
+    let res2: u64;
+    let res3: u64;
+    let mut overflowFlag = false;
+
+    OVERFLOWING_ADD!(x.value.0, y.value.0, res0, overflowFlag);
+    OVERFLOWING_ADD!(x.value.1, y.value.1, res1, overflowFlag);
+    OVERFLOWING_ADD!(x.value.2, y.value.2, res2, overflowFlag);
+    OVERFLOWING_ADD!(x.value.3, y.value.3, res3, overflowFlag);
+    
+    let mut m = yU64x4
+    {
+        value: (res0, res1, res2, res3),
+    };
+
+    (m,overflowFlag)
+}
