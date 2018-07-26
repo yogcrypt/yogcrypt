@@ -8,7 +8,7 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-//#![feature(test)] 
+#![feature(test)] 
 
 extern crate rand;
 extern crate bit_vec;
@@ -214,6 +214,7 @@ mod tests
 	}
 
 	#[bench]
+	#[ignore]
 	fn bench_sm2_verSignJ(ben: &mut Bencher)
 	{
 		let Xg = yU64x4::new(0x4C4E6C147FEDD43D, 0x32220B3BADD50BDC, 0x746434EBC3CC315E, 0x421DEBD61B62EAB6);

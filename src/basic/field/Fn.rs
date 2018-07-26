@@ -2,9 +2,9 @@ use std::option;
 use ::basic::cell::yU64x4::*;
 use ::basic::cell::yU64x8::*;
 
-pub const n     : yU64x4 = yU64x4{value:(0x53BBF40939D54123, 0x7203DF6B21C6052B, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF)};
-    const rhoN  : yU64x4 = yU64x4{value:(0xAC440BF6C62ABEDD, 0x8DFC2094DE39FAD4, 0x0000000000000000, 0x0000000100000000)};
-    const rhoN2 : yU64x4 = yU64x4{value:(0x901192af7c114f20, 0x3464504ade6fa2fa, 0x620fc84c3affe0d4, 0x1eb5e412a22b3d3b)};
+pub const n     : yU64x4 = yU64x4{value:[0x53BBF40939D54123, 0x7203DF6B21C6052B, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF]};
+    const rhoN  : yU64x4 = yU64x4{value:[0xAC440BF6C62ABEDD, 0x8DFC2094DE39FAD4, 0x0000000000000000, 0x0000000100000000]};
+    const rhoN2 : yU64x4 = yU64x4{value:[0x901192af7c114f20, 0x3464504ade6fa2fa, 0x620fc84c3affe0d4, 0x1eb5e412a22b3d3b]};
 
 macro_rules! OVERFLOWING_ADD
 {
@@ -45,11 +45,11 @@ pub fn getMulInvModN(x: yU64x4) -> yU64x4
 
 	while((!equalToOne(u))&&(!equalToOne(v)))
 	{
-		while(u.value.0%2==0)
+		while(u.value[0]%2==0)
 		{
 			u.rightShift1();
 
-			if(x1.value.0%2==0) 
+			if(x1.value[0]%2==0) 
 			{
 				x1.rightShift1();
 			}
@@ -60,16 +60,16 @@ pub fn getMulInvModN(x: yU64x4) -> yU64x4
 				x1.rightShift1();
 				if(overflowFlag)
 				{
-					x1.value.3 |= 0x8000000000000000;
+					x1.value[3] |= 0x8000000000000000;
 				}
 			}
 		}
 
-		while(v.value.0%2==0)
+		while(v.value[0]%2==0)
 		{
 			v.rightShift1();
 
-			if(x2.value.0%2==0) 
+			if(x2.value[0]%2==0) 
 			{
 				x2.rightShift1();
 			} 
@@ -81,7 +81,7 @@ pub fn getMulInvModN(x: yU64x4) -> yU64x4
 				x2.rightShift1();
 				if(overflowFlag)
 				{
-					x2.value.3 |= 0x8000000000000000;
+					x2.value[3] |= 0x8000000000000000;
 				}
 			}
 		}
@@ -124,15 +124,15 @@ pub fn addModN(x: yU64x4, y: yU64x4) -> yU64x4
 	let res3: u64;
 	let mut overflowFlag = false;
 
-	OVERFLOWING_ADD!(x.value.0, y.value.0, res0, overflowFlag);
-	OVERFLOWING_ADD!(x.value.1, y.value.1, res1, overflowFlag);
-	OVERFLOWING_ADD!(x.value.2, y.value.2, res2, overflowFlag);
-	OVERFLOWING_ADD!(x.value.3, y.value.3, res3, overflowFlag);
+	OVERFLOWING_ADD!(x.value[0], y.value[0], res0, overflowFlag);
+	OVERFLOWING_ADD!(x.value[1], y.value[1], res1, overflowFlag);
+	OVERFLOWING_ADD!(x.value[2], y.value[2], res2, overflowFlag);
+	OVERFLOWING_ADD!(x.value[3], y.value[3], res3, overflowFlag);
 	
 
 	let mut m = yU64x4
 	{
-		value: (res0, res1, res2, res3),
+		value: [res0, res1, res2, res3],
 	};
 
 	if overflowFlag==true  //overflow
@@ -175,14 +175,14 @@ fn montMul(x: yU64x4, y:yU64x4) -> yU64x4
 			z
 		} ;
 
-		if(z.value.0%2==1) 
+		if(z.value[0]%2==1) 
 		{
 			let (u,overflowFlag) = addNoMod(z,n);
 			z = u;
 			z.rightShift1();
 			if(overflowFlag)
 			{
-				z.value.3 |= 0x8000000000000000;
+				z.value[3] |= 0x8000000000000000;
 			}
 		}
 		else 
@@ -201,14 +201,14 @@ fn montRed(mut t: yU64x4) -> yU64x4
 {
 	for i in 0..256
 	{
-		if(t.value.0%2==1) 
+		if(t.value[0]%2==1) 
 		{
 			let (u,overflowFlag) = addNoMod(t, n);
 			t = u;
 			t.rightShift1();
 			if(overflowFlag)
 			{
-				t.value.3 |= 0x8000000000000000;
+				t.value[3] |= 0x8000000000000000;
 			}
 		}	
 		else

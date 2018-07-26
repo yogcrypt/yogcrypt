@@ -6,8 +6,8 @@ use rand::random;
 use std::vec::Vec;
 use ::sm3::*;
 
-const Px: yU64x4 =yU64x4{value: (0x6BB08FF356F35020, 0x72179FAD1833FC07, 0x50DD7D161E4BC5C6, 0x09F9DF311E5421A1),};
-const Py: yU64x4 =yU64x4{value: (0x6632F6072DA9AD13, 0x0AED05FBF35E084A, 0x2DC6EA718CC1AA60, 0xCCEA490CE26775A5),};
+const Px: yU64x4 =yU64x4{value: [0x6BB08FF356F35020, 0x72179FAD1833FC07, 0x50DD7D161E4BC5C6, 0x09F9DF311E5421A1],};
+const Py: yU64x4 =yU64x4{value: [0x6632F6072DA9AD13, 0x0AED05FBF35E084A, 0x2DC6EA718CC1AA60, 0xCCEA490CE26775A5],};
 
 const P: Point = 
 Point
@@ -33,59 +33,59 @@ fn sm2GetZ(Q: Point) -> [u32;8]
 	s[2] = 0x0708090A;
 	s[3] = 0x0B0C0D0E;
 
-	s[4]  = (a.value.3 >> 32) as u32;
-	s[5]  = a.value.3 as u32;
-	s[6]  = (a.value.2 >> 32) as u32;
-	s[7]  = a.value.2 as u32;
-	s[8]  = (a.value.1 >> 32) as u32;
-	s[9] =	a.value.1 as u32;
-	s[10] = (a.value.0 >> 32) as u32;
-	s[11] =	a.value.0 as u32;
+	s[4]  = (a.value[3] >> 32) as u32;
+	s[5]  = a.value[3] as u32;
+	s[6]  = (a.value[2] >> 32) as u32;
+	s[7]  = a.value[2] as u32;
+	s[8]  = (a.value[1] >> 32) as u32;
+	s[9] =	a.value[1] as u32;
+	s[10] = (a.value[0] >> 32) as u32;
+	s[11] =	a.value[0] as u32;
 
-	s[12] = (b.value.3 >> 32) as u32;
-	s[13] = b.value.3 as u32;
-	s[14] = (b.value.2 >> 32) as u32;
-	s[15] = b.value.2 as u32;
-	s[16] = (b.value.1 >> 32) as u32;
-	s[17] =	b.value.1 as u32;
-	s[18] = (b.value.0 >> 32) as u32;
-	s[19] =	b.value.0 as u32;
+	s[12] = (b.value[3] >> 32) as u32;
+	s[13] = b.value[3] as u32;
+	s[14] = (b.value[2] >> 32) as u32;
+	s[15] = b.value[2] as u32;
+	s[16] = (b.value[1] >> 32) as u32;
+	s[17] =	b.value[1] as u32;
+	s[18] = (b.value[0] >> 32) as u32;
+	s[19] =	b.value[0] as u32;
 
-	s[20] = (G.x.value.3 >> 32) as u32;
-	s[21] = G.x.value.3 as u32;
-	s[22] = (G.x.value.2 >> 32) as u32;
-	s[23] = G.x.value.2 as u32;
-	s[24] = (G.x.value.1 >> 32) as u32;
-	s[25] =	G.x.value.1 as u32;
-	s[26] = (G.x.value.0 >> 32) as u32;
-	s[27] =	G.x.value.0 as u32;
+	s[20] = (G.x.value[3] >> 32) as u32;
+	s[21] = G.x.value[3] as u32;
+	s[22] = (G.x.value[2] >> 32) as u32;
+	s[23] = G.x.value[2] as u32;
+	s[24] = (G.x.value[1] >> 32) as u32;
+	s[25] =	G.x.value[1] as u32;
+	s[26] = (G.x.value[0] >> 32) as u32;
+	s[27] =	G.x.value[0] as u32;
 
-	s[28] = (G.y.value.3 >> 32) as u32;
-	s[29] = G.y.value.3 as u32;
-	s[30] = (G.y.value.2 >> 32) as u32;
-	s[31] = G.y.value.2 as u32;
-	s[32] = (G.y.value.1 >> 32) as u32;
-	s[33] =	G.y.value.1 as u32;
-	s[34] = (G.y.value.0 >> 32) as u32;
-	s[35] =	G.y.value.0 as u32;
+	s[28] = (G.y.value[3] >> 32) as u32;
+	s[29] = G.y.value[3] as u32;
+	s[30] = (G.y.value[2] >> 32) as u32;
+	s[31] = G.y.value[2] as u32;
+	s[32] = (G.y.value[1] >> 32) as u32;
+	s[33] =	G.y.value[1] as u32;
+	s[34] = (G.y.value[0] >> 32) as u32;
+	s[35] =	G.y.value[0] as u32;
 
-	s[36] = (Q.x.value.3 >> 32) as u32;
-	s[37] = Q.x.value.3 as u32;
-	s[38] = (Q.x.value.2 >> 32) as u32;
-	s[39] = Q.x.value.2 as u32;
-	s[40] = (Q.x.value.1 >> 32) as u32;
-	s[41] =	Q.x.value.1 as u32;
-	s[42] = (Q.x.value.0 >> 32) as u32;
-	s[43] =	Q.x.value.0 as u32;
+	s[36] = (Q.x.value[3] >> 32) as u32;
+	s[37] = Q.x.value[3] as u32;
+	s[38] = (Q.x.value[2] >> 32) as u32;
+	s[39] = Q.x.value[2] as u32;
+	s[40] = (Q.x.value[1] >> 32) as u32;
+	s[41] =	Q.x.value[1] as u32;
+	s[42] = (Q.x.value[0] >> 32) as u32;
+	s[43] =	Q.x.value[0] as u32;
 
-	s[44] = (Q.y.value.3 >> 32) as u32;
-	s[45] = Q.y.value.3 as u32;
-	s[46] = (Q.y.value.2 >> 32) as u32;
-	s[47] = Q.y.value.2 as u32;
-	s[48] = (Q.y.value.1 >> 32) as u32;
-	s[49] =	Q.y.value.1 as u32;
-	s[50] = (Q.y.value.0 >> 32) as u32;
-	s[51] =	Q.y.value.0 as u32;
+	s[44] = (Q.y.value[3] >> 32) as u32;
+	s[45] = Q.y.value[3] as u32;
+	s[46] = (Q.y.value[2] >> 32) as u32;
+	s[47] = Q.y.value[2] as u32;
+	s[48] = (Q.y.value[1] >> 32) as u32;
+	s[49] =	Q.y.value[1] as u32;
+	s[50] = (Q.y.value[0] >> 32) as u32;
+	s[51] =	Q.y.value[0] as u32;
 
 	let Z = sm3Enc(&s[0..52],52*32);
 

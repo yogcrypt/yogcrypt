@@ -8,10 +8,10 @@ use std::fmt::Display;
 use std::vec::Vec;
 use bit_vec::BitVec;
 
-pub const a: yU64x4 = yU64x4{value: (0xFFFFFFFFFFFFFFFC, 0xFFFFFFFF00000000, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF),};
-pub const b: yU64x4 = yU64x4{value: (0xDDBCBD414D940E93, 0xF39789F515AB8F92, 0x4D5A9E4BCF6509A7, 0x28E9FA9E9D9F5E34),};
-pub const Gx: yU64x4 = yU64x4{value: (0x715A4589334C74C7, 0x8FE30BBFF2660BE1, 0x5F9904466A39C994, 0x32C4AE2C1F198119),};
-pub const Gy: yU64x4 = yU64x4{value: (0x02DF32E52139F0A0, 0xD0A9877CC62A4740, 0x59BDCEE36B692153, 0xBC3736A2F4F6779C),};
+pub const a: yU64x4 = yU64x4{value: [0xFFFFFFFFFFFFFFFC, 0xFFFFFFFF00000000, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF],};
+pub const b: yU64x4 = yU64x4{value: [0xDDBCBD414D940E93, 0xF39789F515AB8F92, 0x4D5A9E4BCF6509A7, 0x28E9FA9E9D9F5E34],};
+pub const Gx: yU64x4 = yU64x4{value: [0x715A4589334C74C7, 0x8FE30BBFF2660BE1, 0x5F9904466A39C994, 0x32C4AE2C1F198119],};
+pub const Gy: yU64x4 = yU64x4{value: [0x02DF32E52139F0A0, 0xD0A9877CC62A4740, 0x59BDCEE36B692153, 0xBC3736A2F4F6779C],};
 
 pub const G: Point = 
 Point
@@ -301,14 +301,14 @@ pub fn timesPoint(mut P: Point, mut times: yU64x4) -> Point
 
 	while (!equalToOne(times))
 	{
-		if(times.value.0%2==0)
+		if(times.value[0]%2==0)
 		{
 			times.rightShift1();
 			P = addPoint(P,P);
 		}
 		else 
 		{
-			times.value.0 -= 1;
+			times.value[0] -= 1;
 			T = addPoint(T,P);	
 		}
 	}
@@ -446,14 +446,14 @@ pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
 
 	while (!equalToOne(times))
 	{
-		if(times.value.0%2==0)
+		if(times.value[0]%2==0)
 		{
 			times.rightShift1();
 			P = addJacobPoint(P,P);
 		}
 		else 
 		{
-			times.value.0 -= 1;
+			times.value[0] -= 1;
 			T = addJacobPoint(T,P);	
 		}
 	}

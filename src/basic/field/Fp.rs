@@ -1,12 +1,13 @@
+#![feature(test)] 
 use std::option;
 use ::basic::field::*;
 use ::basic::cell::yU64x4::*;
 use ::basic::cell::yU64x8::*;
 
-pub const p: yU64x4 = yU64x4{value:(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFF00000000, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF)};
-const rhoP  : yU64x4 = yU64x4{value:(0x0000000000000001, 0x00000000FFFFFFFF, 0x0000000000000000, 0x0000000100000000)};
-const rhoP2 : yU64x4 = yU64x4{value:(0x0000000200000003, 0x00000002FFFFFFFF, 0x0000000100000001, 0x0000000400000002)};
-pub const inv2P : yU64x4 = yU64x4{value:(0x8000000000000000, 0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF, 0x7FFFFFFF7FFFFFFF)};
+pub const p: yU64x4 = yU64x4{value:[0xFFFFFFFFFFFFFFFF, 0xFFFFFFFF00000000, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFFFF]};
+const rhoP  : yU64x4 = yU64x4{value:[0x0000000000000001, 0x00000000FFFFFFFF, 0x0000000000000000, 0x0000000100000000]};
+const rhoP2 : yU64x4 = yU64x4{value:[0x0000000200000003, 0x00000002FFFFFFFF, 0x0000000100000001, 0x0000000400000002]};
+pub const inv2P : yU64x4 = yU64x4{value:[0x8000000000000000, 0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF, 0x7FFFFFFF7FFFFFFF]};
 
 macro_rules! OVERFLOWING_ADD
 {
@@ -47,11 +48,11 @@ pub fn getMulInv(x: yU64x4) -> yU64x4
 
 	while((!equalToOne(u))&&(!equalToOne(v)))
 	{
-		while(u.value.0%2==0)
+		while(u.value[0]%2==0)
 		{
 			u.rightShift1();
 
-			if(x1.value.0%2==0) 
+			if(x1.value[0]%2==0) 
 			{
 				x1.rightShift1();
 			}
@@ -62,16 +63,16 @@ pub fn getMulInv(x: yU64x4) -> yU64x4
 				x1.rightShift1();
 				if(overflowFlag)
 				{
-					x1.value.3 |= 0x8000000000000000;
+					x1.value[3] |= 0x8000000000000000;
 				}
 			}
 		}
 
-		while(v.value.0%2==0)
+		while(v.value[0]%2==0)
 		{
 			v.rightShift1();
 
-			if(x2.value.0%2==0) 
+			if(x2.value[0]%2==0) 
 			{
 				x2.rightShift1();
 			} 
@@ -83,7 +84,7 @@ pub fn getMulInv(x: yU64x4) -> yU64x4
 				x2.rightShift1();
 				if(overflowFlag)
 				{
-					x2.value.3 |= 0x8000000000000000;
+					x2.value[3] |= 0x8000000000000000;
 				}
 			}
 		}
@@ -126,15 +127,15 @@ pub fn add(x: yU64x4, y: yU64x4) -> yU64x4
 	let res3: u64;
 	let mut overflowFlag = false;
 
-	OVERFLOWING_ADD!(x.value.0, y.value.0, res0, overflowFlag);
-	OVERFLOWING_ADD!(x.value.1, y.value.1, res1, overflowFlag);
-	OVERFLOWING_ADD!(x.value.2, y.value.2, res2, overflowFlag);
-	OVERFLOWING_ADD!(x.value.3, y.value.3, res3, overflowFlag);
+	OVERFLOWING_ADD!(x.value[0], y.value[0], res0, overflowFlag);
+	OVERFLOWING_ADD!(x.value[1], y.value[1], res1, overflowFlag);
+	OVERFLOWING_ADD!(x.value[2], y.value[2], res2, overflowFlag);
+	OVERFLOWING_ADD!(x.value[3], y.value[3], res3, overflowFlag);
 	
 
 	let mut m = yU64x4
 	{
-		value: (res0, res1, res2, res3),
+		value: [res0, res1, res2, res3],
 	};
 
 	if overflowFlag==true  //overflow
@@ -153,18 +154,52 @@ pub fn sub(x: yU64x4, y: yU64x4) -> yU64x4
 	add(x, getAddInv(y))
 }
 
+/*fn helperMul(x: u64, y: u64) -> (u64, u64)
+{
+	let z: u128 = (x as u128) * (y as u128);
+	let carry = z >> 64;
+	let rst = z ^ (carry << 64);
+
+	(rst as u64, carry as u64)
+}
+
+pub fn rawMul(x: yU64x4, y: yU64x4) -> (yU64x4, yU64x4)
+{
+	let result: [u64; 8];
+	for i in result.iter()
+	{
+		println!("{}", i);
+	}
+	// for each 64bit of x
+	for xi in 0..4
+	{
+		// for each 64bit of y
+		for yi in 0.. 4
+		{
+			let (rst, carry) = helperMul(x.value[xi], y.value[yi]);
+		}
+	}
+	(yU64x4::new(0, 0, 0, 0), yU64x4::new(0, 0, 0, 0))
+}
+
+pub fn mul(x: yU64x4, y: yU64x4) -> yU64x4
+{
+	yU64x4::new(0, 0, 0, 0)
+}*/
+
+pub fn div(x: yU64x4, y: yU64x4) -> yU64x4
+{	
+	let q = getMulInv(y);
+	mul(x, q)
+}
+
+
 pub fn mul(x: yU64x4, y: yU64x4) -> yU64x4
 {
 	let x_bar = montMul(x, rhoP2);
 	let y_bar = montMul(y, rhoP2);
 	let t_bar = montMul(x_bar, y_bar);
 	montRed(t_bar)
-}
-
-pub fn div(x: yU64x4, y: yU64x4) -> yU64x4
-{	
-	let q = getMulInv(y);
-	mul(x, q)
 }
 
 fn montMul(x: yU64x4, y:yU64x4) -> yU64x4
@@ -182,14 +217,14 @@ fn montMul(x: yU64x4, y:yU64x4) -> yU64x4
 			z
 		} ;
 
-		if(z.value.0%2==1) 
+		if(z.value[0]%2==1) 
 		{
 			let (u,overflowFlag) = addNoMod(z,p);
 			z = u;
 			z.rightShift1();
 			if(overflowFlag)
 			{
-				z.value.3 |= 0x8000000000000000;
+				z.value[3] |= 0x8000000000000000;
 			}
 		}
 		else 
@@ -208,14 +243,14 @@ fn montRed(mut t: yU64x4) -> yU64x4
 {
 	for i in 0..256
 	{
-		if(t.value.0%2==1) 
+		if(t.value[0]%2==1) 
 		{
 			let (u,overflowFlag) = addNoMod(t, p);
 			t = u;
 			t.rightShift1();
 			if(overflowFlag)
 			{
-				t.value.3 |= 0x8000000000000000;
+				t.value[3] |= 0x8000000000000000;
 			}
 		}	
 		else
@@ -229,11 +264,81 @@ fn montRed(mut t: yU64x4) -> yU64x4
 
 pub fn div2(mut x: yU64x4) -> yU64x4
 {
-	if(x.value.0%2==1)
+	if(x.value[0]%2==1)
 	{
 		x = add(x, p);
 	}
 	x.rightShift1();
 
 	x
+}
+
+#[cfg(test)]
+mod tests 
+{
+    extern crate test;
+    extern crate rand;
+
+    use super::Fp::*;
+    use ::basic::cell::yU64x4::*;
+
+    use self::test::Bencher;
+    use rand::random;
+
+    fn rand_elem() -> yU64x4
+    {
+        yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>())
+    }
+
+    #[test]
+    fn test_mul() 
+    {
+        let a = yU64x4::new(35, 0, 0, 0);
+        let b = yU64x4::new(15, 0, 0, 0);
+        let c = mul(a, b);
+        assert!(equalTo(c, yU64x4::new(15 * 35, 0, 0, 0)));
+		println!("{:?}", c);
+    }
+
+    #[bench]
+	fn bench_mul(ben: &mut Bencher)
+	{
+        let a = rand_elem();
+            
+        let b = rand_elem();
+            
+        ben.iter(|| 
+        {
+            let c = mul(a, b);
+        })
+	}
+
+    #[test]
+	fn test_inversion()
+	{
+        let a = rand_elem();
+        let b = getMulInv(a);
+        assert!(equalTo(mul(a, b), yU64x4::new(1,0,0,0)));
+	}
+
+    #[bench]
+	fn bench_inversion(ben: &mut Bencher)
+	{
+        let a = rand_elem();
+        ben.iter(|| 
+        {
+            let b = getMulInv(a);
+        })
+	}
+
+    #[bench]
+    fn bench_add(ben: &mut Bencher)
+    {
+        let a = rand_elem();
+        let b = rand_elem();
+        ben.iter(||
+        {
+            let c = add(a,b);
+        })
+    }
 }
