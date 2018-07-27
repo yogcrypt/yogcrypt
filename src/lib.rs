@@ -8,7 +8,7 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-#![feature(test)] 
+//#![feature(test)] 
 
 extern crate rand;
 extern crate bit_vec;
@@ -193,7 +193,7 @@ mod tests
 	
 	#[bench]
 	#[ignore]
-	fn bench_sm2_sm2GenSign(ben: &mut Bencher)
+	fn bench_sm2_genSign(ben: &mut Bencher)
 	{
 		let Xg = yU64x4::new(0x4C4E6C147FEDD43D, 0x32220B3BADD50BDC, 0x746434EBC3CC315E, 0x421DEBD61B62EAB6);
 		let Yg = yU64x4::new(0xA85841B9E46E09A2, 0xE5D7FDFCBFA36EA1, 0xD47349D2153B70C4, 0x0680512BCBB42C07);
@@ -210,6 +210,28 @@ mod tests
 		
 		ben.iter(|| {
 			let m = sm2GenSign(&Msg, Da, Q, 4);
+		});
+	}
+
+	#[bench]
+	#[ignore]
+	fn bench_sm2_genSignJ(ben: &mut Bencher)
+	{
+		let Xg = yU64x4::new(0x4C4E6C147FEDD43D, 0x32220B3BADD50BDC, 0x746434EBC3CC315E, 0x421DEBD61B62EAB6);
+		let Yg = yU64x4::new(0xA85841B9E46E09A2, 0xE5D7FDFCBFA36EA1, 0xD47349D2153B70C4, 0x0680512BCBB42C07);
+		let Da = yU64x4::new(0x0C23661D15897263, 0x2A519A55171B1B65, 0x068C8D803DFF7979, 0x128B2FA8BD433C6C);
+		let Xa = yU64x4::new(0xE97C04FF4DF2548A, 0x02BB79E2A5844495, 0x471BEE11825BE462, 0x0AE4C7798AA0F119);
+		let Ya = yU64x4::new(0xA9FE0C6BB798E857, 0x07353E53A176D684, 0x6352A73C17B7F16F, 0x7C0240F88F1CD4E1);
+
+		let G = Point::new(Xg, Yg);
+		let P = Point::new(Xa, Ya);
+
+		let Msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+
+		let Q = sm2GetPubKey(Da);
+		
+		ben.iter(|| {
+			let m = sm2GenSignJ(&Msg, Da, Q, 4);
 		});
 	}
 

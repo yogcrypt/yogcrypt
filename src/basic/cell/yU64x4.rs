@@ -37,6 +37,15 @@ impl yU64x4
 			value: [x0, x1, x2, x3],
 		}
 	}
+
+	pub fn fromU32(x: [u32;8]) -> Self 
+	{
+		Self
+		{
+			value: [((x[1] as u64) << 32) + x[0] as u64, ((x[3] as u64) << 32) + x[2] as u64,
+				((x[5] as u64) << 32) + x[4] as u64, ((x[7] as u64) << 32) + x[6] as u64],
+		}
+	}
 }
 
 impl UniformAccessU64 for yU64x4
