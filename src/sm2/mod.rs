@@ -18,7 +18,9 @@ Point
 
 pub fn sm2GetPubKey(d: yU64x4) -> Point
 {
-	timesPoint(G, d)
+	let GJacob = affineToJacob(G);
+	let mut RstJacob = timesJacobPoint(GJacob, d);
+	jacobToAffine(RstJacob)
 }
 
 fn sm2GetZ(Q: Point) -> [u32;8]
@@ -188,7 +190,6 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 	let GJacob = affineToJacob(G);
 	let mut P1Jacob = timesJacobPoint(GJacob, k);
 	let mut P1 = jacobToAffine(P1Jacob);
-	let mut P2 = timesPoint(G,k);
 
 	e = transFn(e);
 	let mut r = addModN(e,P1.x);
