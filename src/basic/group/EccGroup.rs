@@ -20,6 +20,14 @@ Point
 	y: Gy,
 };
 
+pub const zeroJacob: JacobPoint = 
+JacobPoint
+{	
+	x: yU64x4{value: [1, 0, 0, 0]},
+	y: yU64x4{value: [1, 0, 0, 0]},
+	z: yU64x4{value: [0, 0, 0, 0]},
+};
+
 #[derive(Copy, Clone)]
 pub struct Point
 {
@@ -111,6 +119,12 @@ pub struct ECC_Fp
 	pub b: yU64x4,
 	pub G: Point,
 	pub n: yU64x4, // order of G
+}
+
+pub fn isOnCurve(P: Point) -> bool
+{
+	// is y^2 = x^3 + ax + b ?
+	equalTo(mul(P.y, P.y), add(add(mul(mul(P.x, P.x), P.x), mul(a, P.x)), b))
 }
 
 fn pointEqualToO(P: Point) -> bool
@@ -343,6 +357,45 @@ pub fn isJacobReciprocal(P: JacobPoint, Q: JacobPoint) -> bool
 	equalTo(getAddInv(s1),s2)
 }
 
+// Note: this function should
+// ALWAYS be called with different point
+pub fn addJacobAffine(P: JacobPoint, Q: Point) -> JacobPoint
+{
+	if (jacobPointEqualToO(P))
+	{
+		affineToJacob(Q)
+	}
+	else 
+	{
+		let z2 = mul(P.z, P.z);
+		let A = mul(Q.x, z2);
+		let B = mul(mul(Q.y, z2), P.z);
+		let C = sub(A, P.x);
+		let D = sub(B, P.y);
+		let C2 = mul(C, C);
+		let C3 = mul(C2, C);
+		let X1C2 = mul(P.x, C2);
+		let x = sub(sub(mul(D, D), add(X1C2, X1C2)), C3);
+		let y = sub(mul(D, sub(X1C2, x)), mul(P.y, C3));
+		let z = mul(P.z, C);
+		JacobPoint
+		{
+			x, y, z,
+		}
+	}
+}
+
+pub fn negJacob(P: JacobPoint) -> JacobPoint
+{
+	let x = P.x;
+	let y = -P.y;
+	let z = P.z;
+	JacobPoint
+	{
+		x, y, z,
+	}
+}
+
 pub fn addJacobPoint(P: JacobPoint, Q: JacobPoint) -> JacobPoint
 {
 	if(jacobPointEqualToO(P))
@@ -437,12 +490,28 @@ pub fn addJacobPoint(P: JacobPoint, Q: JacobPoint) -> JacobPoint
 
 pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
 {
-	let mut T = JacobPoint
+	let mut T = zeroJacob;
+
+	let PAf = jacobToAffine(P);
+	for blocki in (0..4).rev()
 	{
-		x: yU64x4::new(1,0,0,0),
-		y: yU64x4::new(1,0,0,0),
-		z: yU64x4::new(0,0,0,0),
-	};
+		for i in (0..64).rev()
+		{
+			T = addJacobPoint(T, T);
+			if (times.value[blocki] & (1 << i)) != 0
+			{
+				T = addJacobAffine(T, PAf);
+			}
+		}
+	}
+	T
+}
+
+/*
+// outdated functions
+pub fn timesJacobPoint2(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
+{
+	let mut T = zeroJacob;
 
 	while (!equalToOne(times))
 	{
@@ -459,4 +528,60 @@ pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
 	}
 
 	addJacobPoint(P,T)
+}
+*/
+
+#[cfg(test)]
+mod tests 
+{
+    extern crate test;
+    extern crate rand;
+
+    use super::*;
+    use ::basic::cell::yU64x4::*;
+
+    use self::test::Bencher;
+    use rand::random;
+
+	#[test]
+	fn test_add_Jacob_affine()
+	{
+		let L = affineToJacob(G);
+		let G2 = addJacobPoint(L, L);
+		let S1 = addJacobPoint(G2, L);
+		let S2 = addJacobAffine(G2, G);
+		assert!(jacobPointEuqalTo(S1, S2));
+	}
+
+	#[test]
+	fn test_zero_add_Jacob_affine()
+	{
+		let L = affineToJacob(G);
+		let z = zeroJacob;
+		let S1 = addJacobPoint(z, L);
+		let S2 = addJacobAffine(z, G);
+		assert!(jacobPointEuqalTo(S1, S2));
+	}
+
+	#[test]
+	fn test_times3()
+	{
+		let L = affineToJacob(G);
+		let G2 = addJacobPoint(L, L);
+		let S1 = addJacobPoint(G2, L);
+		let S2 = timesJacobPoint(L, 
+		yU64x4::new(3, 0, 0, 0));
+		assert!(jacobPointEuqalTo(S1, S2));
+	}
+
+    /*#[bench]
+    fn bench_add(ben: &mut Bencher)
+    {
+        let a = rand_elem();
+        let b = rand_elem();
+        ben.iter(||
+        {
+            let c = add(a,b);
+        })
+    }*/
 }

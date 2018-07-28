@@ -1,5 +1,5 @@
 use ::basic::cell::yU64x4::*;
-use ::basic::group::EccGroup::{G, Point, a, addJacobPoint, addPoint, affineToJacob, b, jacobToAffine, timesJacobPoint, timesPoint};
+use ::basic::group::EccGroup::*;
 use ::basic::field::Fp::p;
 use ::basic::field::Fn::*;
 use rand::random;
@@ -96,6 +96,10 @@ fn sm2GetZ(Q: Point) -> [u32;8]
 
 pub fn sm2GenSign(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU64x4)
 {
+	// verify that Q is indeed on the curve
+	// to prevent false curve attack
+	assert!(isOnCurve(Q), "public key not on curve!");
+
 	let Z = sm2GetZ(Q);
 
 	let M = [Msg, &Z].concat();
@@ -137,6 +141,11 @@ pub fn sm2GenSign(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU64
 
 pub fn sm2VerSign(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bool
 {
+
+	// verify that Q is indeed on the curve
+	// to prevent false curve attack
+	assert!(isOnCurve(Q), "public key not on curve!");
+
 	if(largerEqualThan(r,n)||equalToZero(r)) {return false;}
 	if(largerEqualThan(s,n)||equalToZero(s)) {return false;}
 	let Za = sm2GetZ(Q);
@@ -174,6 +183,10 @@ pub fn sm2VerSign(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bo
 
 pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU64x4)
 {
+	// verify that Q is indeed on the curve
+	// to prevent false curve attack
+	assert!(isOnCurve(Q), "Public key not on curve!");
+
 	let Z = sm2GetZ(Q);
 
 	let M = [Msg, &Z].concat();
@@ -218,6 +231,10 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 
 pub fn sm2VerSignJ(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bool
 {
+	// verify that Q is indeed on the curve
+	// to prevent false curve attack
+	assert!(isOnCurve(Q), "public key not on curve!");
+
 	if(largerEqualThan(r,n)||equalToZero(r)) {return false;}
 	if(largerEqualThan(s,n)||equalToZero(s)) {return false;}
 	let Za = sm2GetZ(Q);

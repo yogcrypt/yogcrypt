@@ -1,4 +1,3 @@
-//#![feature(test)] 
 use std::option;
 use ::basic::field::*;
 use ::basic::cell::yU64x4::*;
@@ -288,7 +287,7 @@ pub fn div(x: yU64x4, y: yU64x4) -> yU64x4
 }
 
 
-/*
+/* outdated functions
 pub fn mul(x: yU64x4, y: yU64x4) -> yU64x4
 {
 	let x_bar = montMul(x, rhoP2);
