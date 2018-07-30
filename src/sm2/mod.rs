@@ -18,8 +18,7 @@ Point
 
 pub fn sm2GetPubKey(d: yU64x4) -> Point
 {
-	let GJacob = affineToJacob(G);
-	let mut RstJacob = timesJacobPoint(GJacob, d);
+	let mut RstJacob = timesBasePoint(d);
 	jacobToAffine(RstJacob)
 }
 
@@ -98,93 +97,6 @@ pub fn sm2GenSign(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU64
 {
 	// verify that Q is indeed on the curve
 	// to prevent false curve attack
-	assert!(isOnCurve(Q), "public key not on curve!");
-
-	let Z = sm2GetZ(Q);
-
-	let M = [Msg, &Z].concat();
-
-	let E = sm3Enc(&M, (len+8)*32);
-	let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
-	
-	let mut k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-	if(largerEqualThan(k, p))
-	{
-		k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-	}
-
-	let mut P1 = timesPoint(G, k);
-
-	e = transFn(e);
-	let mut r = addModN(e,P1.x);
-	let mut d = transFn(D);
-
-	// Calculate s;
-	let m1 = getMulInvModN(addModN(d,yU64x4::new(1,0,0,0))); //(1+d)^-1
-	let m2 = subModN(k,mulModN(r,d));//k-r*d
-
-	let mut s = mulModN(getMulInvModN(addModN(d,yU64x4::new(1,0,0,0))),subModN(k,mulModN(r,d)));
-
-	while(equalToZero(r)||equalToZero(addModN(r,k))||equalToZero(s))
-	{
-		k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-		if(largerEqualThan(k, p))
-		{
-			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
-		}
-		P1 = timesPoint(G, k);
-		r = addModN(e,P1.x);
-	}
-
-	(r, s)
-}
-
-pub fn sm2VerSign(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bool
-{
-
-	// verify that Q is indeed on the curve
-	// to prevent false curve attack
-	assert!(isOnCurve(Q), "public key not on curve!");
-
-	if(largerEqualThan(r,n)||equalToZero(r)) {return false;}
-	if(largerEqualThan(s,n)||equalToZero(s)) {return false;}
-	let Za = sm2GetZ(Q);
-	let M = [Msg, &Za].concat();
-
-	let E = sm3Enc(&M,(len+8)*32);
-	let mut e = yU64x4::new(E[7] as u64|((E[6] as u64)<<32),E[5] as u64|((E[4] as u64)<<32) ,E[3] as u64|((E[2] as u64)<<32),E[1] as u64|((E[0] as u64)<<32));
-
-	if(equalToZero(r)||largerEqualThan(r,n))
-	{
-		return false;
-	}
-	if(equalToZero(s)||largerEqualThan(s,n))
-	{
-		return false;
-	}
-
-	let t = addModN(r,s);
-	let P1 = addPoint(timesPoint(G,s),timesPoint(Q,t));
-
-	let e1 = transFn(e);
-	let x1 = transFn(P1.x);
-	let R = addModN(e1,x1);
-
-
-	if(equalTo(R,r))
-	{
-		true
-	}
-	else 
-	{
-		false
-	}
-}
-
-pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU64x4)
-{
-	// verify that Q is indeed on the curve
-	// to prevent false curve attack
 	assert!(isOnCurve(Q), "Public key not on curve!");
 
 	let Z = sm2GetZ(Q);
@@ -200,8 +112,7 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 		k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 	}
 
-	let GJacob = affineToJacob(G);
-	let mut P1Jacob = timesJacobPoint(GJacob, k);
+	let mut P1Jacob = timesBasePoint(k);
 	let mut P1 = jacobToAffine(P1Jacob);
 
 	e = transFn(e);
@@ -221,7 +132,7 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 		{
 			k = yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>());
 		}
-		P1Jacob = timesJacobPoint(GJacob, k);
+		P1Jacob = timesBasePoint(k);
 		P1 = jacobToAffine(P1Jacob);
 		r = addModN(e,P1.x);
 	}
@@ -229,7 +140,7 @@ pub fn sm2GenSignJ(Msg: &[u32], D: yU64x4, Q: Point, len: usize) -> (yU64x4, yU6
 	(r, s)
 }
 
-pub fn sm2VerSignJ(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bool
+pub fn sm2VerSign(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> bool
 {
 	// verify that Q is indeed on the curve
 	// to prevent false curve attack
@@ -252,11 +163,8 @@ pub fn sm2VerSignJ(Msg: &[u32], Q: Point, len: usize, r: yU64x4, s: yU64x4) -> b
 		return false;
 	}
 
-	let PaJacob = affineToJacob(Q);
-	let GJacob = affineToJacob(G);
-
 	let t = addModN(r,s);
-	let P1Jacob = addJacobPoint(timesJacobPoint(GJacob,s), timesJacobPoint(PaJacob,t));
+	let P1Jacob = addJacobPoint(timesBasePoint(s), timesPoint(Q,t));
 	let P1 = jacobToAffine(P1Jacob);
 
 	let e1 = transFn(e);

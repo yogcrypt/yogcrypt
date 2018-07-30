@@ -13,6 +13,9 @@
 extern crate rand;
 extern crate bit_vec;
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod sm2;
 pub mod sm3;
 pub mod sm4;
@@ -148,11 +151,11 @@ mod tests
 
 		let Q = sm2GetPubKey(Da);
 
-		let mut m = sm2GenSignJ(&Msg, Da, Q, 4);
+		let mut m = sm2GenSign(&Msg, Da, Q, 4);
 
 		for i in 0..1
 		{
-			let t = sm2VerSignJ(&Msg, Q, 4, m.0, m.1);
+			let t = sm2VerSign(&Msg, Q, 4, m.0, m.1);
 			println!("{}",t);
 			assert!(t);
 		}
@@ -194,7 +197,7 @@ mod tests
 
 	#[bench]
 	#[ignore]
-	fn bench_sm2_genSignJ(ben: &mut Bencher)
+	fn bench_sm2_genSign(ben: &mut Bencher)
 	{
 		let Xg = yU64x4::new(0x4C4E6C147FEDD43D, 0x32220B3BADD50BDC, 0x746434EBC3CC315E, 0x421DEBD61B62EAB6);
 		let Yg = yU64x4::new(0xA85841B9E46E09A2, 0xE5D7FDFCBFA36EA1, 0xD47349D2153B70C4, 0x0680512BCBB42C07);
@@ -210,13 +213,13 @@ mod tests
 		let Q = sm2GetPubKey(Da);
 		
 		ben.iter(|| {
-			let m = sm2GenSignJ(&Msg, Da, Q, 4);
+			let m = sm2GenSign(&Msg, Da, Q, 4);
 		});
 	}
 
 	#[bench]
 	#[ignore]
-	fn bench_sm2_verSignJ(ben: &mut Bencher)
+	fn bench_sm2_verSign(ben: &mut Bencher)
 	{
 		let Xg = yU64x4::new(0x4C4E6C147FEDD43D, 0x32220B3BADD50BDC, 0x746434EBC3CC315E, 0x421DEBD61B62EAB6);
 		let Yg = yU64x4::new(0xA85841B9E46E09A2, 0xE5D7FDFCBFA36EA1, 0xD47349D2153B70C4, 0x0680512BCBB42C07);
@@ -231,10 +234,10 @@ mod tests
 
 		let Q = sm2GetPubKey(Da);
 			
-		let m = sm2GenSignJ(&Msg, Da, Q, 4);
+		let m = sm2GenSign(&Msg, Da, Q, 4);
 		
 		ben.iter(|| {
-			let t = sm2VerSignJ(&Msg, Q, 4, m.0, m.1);
+			let t = sm2VerSign(&Msg, Q, 4, m.0, m.1);
 			assert!(t);
 		});
 	}

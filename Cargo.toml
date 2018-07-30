@@ -6,6 +6,7 @@ authors = ["liuwenling"]
 [dependencies]
 rand = "*"
 bit-vec = "0.5.0"
+lazy_static = "*"
 
 [profile.bench]
 debug = true

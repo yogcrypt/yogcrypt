@@ -28,6 +28,77 @@ JacobPoint
 	z: yU64x4{value: [0, 0, 0, 0]},
 };
 
+lazy_static! 
+{
+	static ref lowTable: Vec<Point> = {
+		// save G, 2G, 4G, ... for later use
+		let Gj = affineToJacob(G);
+		let mut powG: Vec<JacobPoint> = vec![Gj];
+		for i in 1..256
+		{
+			if let Some(&T) = powG.last() 
+			{
+				powG.push(addJacobPoint(T, T));
+			} 
+		}
+
+		// find the desired values
+		let mut table: Vec<Point> = Vec::new();
+		for i in 0..256
+		{
+			let mut j = i;
+			let mut T = zeroJacob;
+			let mut k = 0;
+			while(j != 0) 
+			{
+				if (j & 1 != 0)
+				{
+					// T = T + 2^{32p}G
+					T = addJacobPoint(T, powG[k << 5]);
+				}
+				j >>= 1;
+				k += 1;
+			}
+			table.push(jacobToAffine(T));
+		}
+		table
+	};
+
+	static ref highTable: Vec<Point> = {
+		// save G, 2G, 4G, ... for later use
+		let Gj = affineToJacob(G);
+		let mut powG: Vec<JacobPoint> = vec![Gj];
+		for i in 1..256
+		{
+			if let Some(&T) = powG.last() 
+			{
+				powG.push(addJacobPoint(T, T));
+			} 
+		}
+
+		// find the desired values
+		let mut table: Vec<Point> = Vec::new();
+		for i in 0..256
+		{
+			let mut j = i;
+			let mut T = zeroJacob;
+			let mut k = 0;
+			while(j != 0) 
+			{
+				if (j & 1 != 0)
+				{
+					// T = T + 2^{32p} * G
+					T = addJacobPoint(T, powG[(k << 5) + (1 << 4)]);
+				}
+				j >>= 1;
+				k += 1;
+			}
+			table.push(jacobToAffine(T));
+		}
+		table
+	};
+}
+
 #[derive(Copy, Clone)]
 pub struct Point
 {
@@ -305,32 +376,6 @@ pub fn addPoint(P: Point, Q: Point) -> Point
 	}
 }
 
-pub fn timesPoint(mut P: Point, mut times: yU64x4) -> Point
-{
-	let mut T = Point
-	{
-		x: yU64x4::new(0,0,0,0),
-		y: yU64x4::new(0,0,0,0),
-	};
-
-	while (!equalToOne(times))
-	{
-		if(times.value[0]%2==0)
-		{
-			times.rightShift1();
-			P = addPoint(P,P);
-		}
-		else 
-		{
-			times.value[0] -= 1;
-			T = addPoint(T,P);	
-		}
-	}
-
-	addPoint(P,T)
-}
-
-
 pub fn getInvJacobPoint(P: JacobPoint) -> JacobPoint
 {
 	JacobPoint
@@ -364,6 +409,10 @@ pub fn addJacobAffine(P: JacobPoint, Q: Point) -> JacobPoint
 	if (jacobPointEqualToO(P))
 	{
 		affineToJacob(Q)
+	}
+	else if (pointEqualToO(Q))
+	{
+		P
 	}
 	else 
 	{
@@ -488,11 +537,11 @@ pub fn addJacobPoint(P: JacobPoint, Q: JacobPoint) -> JacobPoint
 	}
 }
 
-pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
+// Note: this function return A Jacob Point
+pub fn timesPoint(P: Point, times: yU64x4) -> JacobPoint
 {
 	let mut T = zeroJacob;
 
-	let PAf = jacobToAffine(P);
 	for blocki in (0..4).rev()
 	{
 		for i in (0..64).rev()
@@ -500,36 +549,48 @@ pub fn timesJacobPoint(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
 			T = addJacobPoint(T, T);
 			if (times.value[blocki] & (1 << i)) != 0
 			{
-				T = addJacobAffine(T, PAf);
+				T = addJacobAffine(T, P);
 			}
 		}
 	}
 	T
 }
 
-/*
-// outdated functions
-pub fn timesJacobPoint2(mut P: JacobPoint, mut times: yU64x4) -> JacobPoint
+//#[inline]
+fn getBit(u: u64, i: usize) -> usize
+{
+	((u >> i) & 1) as usize
+}
+
+//#[inline]
+fn toIndex(u: yU64x4, i: usize) -> usize
+{
+	getBit(u.value[0], i)
+	+ (getBit(u.value[0], 32 + i) << 1)
+	+ (getBit(u.value[1], i) << 2)
+	+ (getBit(u.value[1], 32 + i) << 3)
+	+ (getBit(u.value[2], i) << 4)
+	+ (getBit(u.value[2], 32 + i) << 5)
+	+ (getBit(u.value[3], i) << 6)
+	+ (getBit(u.value[3], 32 + i) << 7)
+}
+
+// Speed up using Fixed-base comb
+// described in "Software Implementation of the NIST Elliptic
+// Curves Over Prime Fields" by M Brown et. al.
+pub fn timesBasePoint(times: yU64x4) -> JacobPoint
 {
 	let mut T = zeroJacob;
-
-	while (!equalToOne(times))
+	for i in (0..16).rev()
 	{
-		if(times.value[0]%2==0)
-		{
-			times.rightShift1();
-			P = addJacobPoint(P,P);
-		}
-		else 
-		{
-			times.value[0] -= 1;
-			T = addJacobPoint(T,P);	
-		}
+		T = addJacobPoint(T, T);
+		let indexLow = toIndex(times, i);
+		let indexHigh = toIndex(times, i + 16);
+		T = addJacobAffine(T, lowTable[indexLow]);
+		T = addJacobAffine(T, highTable[indexHigh]);
 	}
-
-	addJacobPoint(P,T)
+	T
 }
-*/
 
 #[cfg(test)]
 mod tests 
@@ -542,6 +603,11 @@ mod tests
 
     use self::test::Bencher;
     use rand::random;
+
+	fn rand_elem() -> yU64x4
+    {
+        yU64x4::new(random::<u64>(), random::<u64>(), random::<u64>(), random::<u64>())
+    }
 
 	#[test]
 	fn test_add_Jacob_affine()
@@ -569,19 +635,36 @@ mod tests
 		let L = affineToJacob(G);
 		let G2 = addJacobPoint(L, L);
 		let S1 = addJacobPoint(G2, L);
-		let S2 = timesJacobPoint(L, 
-		yU64x4::new(3, 0, 0, 0));
+		let S2 = timesPoint(G, yU64x4::new(3, 0, 0, 0));
 		assert!(jacobPointEuqalTo(S1, S2));
 	}
 
-    /*#[bench]
-    fn bench_add(ben: &mut Bencher)
+	#[test]
+	fn test_BaseTimes()
+	{
+		let r = rand_elem();
+		let S1 = timesPoint(G, r);
+		let S2 = timesBasePoint(r);
+		assert!(jacobPointEuqalTo(S1, S2));
+	}
+
+    #[bench]
+    fn bench_times(ben: &mut Bencher)
     {
-        let a = rand_elem();
-        let b = rand_elem();
+		let r = rand_elem();
         ben.iter(||
         {
-            let c = add(a,b);
+			timesPoint(G, r);
         })
-    }*/
+    }
+
+	#[bench]
+    fn bench_timesBase(ben: &mut Bencher)
+    {
+		let r = rand_elem();
+        ben.iter(||
+        {
+			timesBasePoint(r);
+        })
+    }
 }
