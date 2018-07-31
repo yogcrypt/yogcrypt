@@ -226,7 +226,7 @@ fn jacobPointEqualToO(P: JacobPoint) -> bool
 	equalToOne(P.x) && equalToOne(P.y) && equalToZero(P.z)
 }
 
-fn jacobPointEuqalTo(P: JacobPoint, Q: JacobPoint) -> bool
+fn jacobPointEqualTo(P: JacobPoint, Q: JacobPoint) -> bool
 {
 	let pz2 = mul(P.z,P.z);
 	let pz3 = mul(pz2,P.z);
@@ -502,12 +502,7 @@ pub fn addJacobPoint(P: JacobPoint, Q: JacobPoint) -> JacobPoint
 			}
 			else 
 			{
-				JacobPoint
-				{
-					x: yU64x4::new(1,0,0,0),
-					y: yU64x4::new(1,0,0,0),
-					z: yU64x4::new(0,0,0,0),
-				}
+				zeroJacob
 			}
 		}
 		else //P=Q
@@ -623,7 +618,7 @@ mod tests
 		let G2 = addJacobPoint(L, L);
 		let S1 = addJacobPoint(G2, L);
 		let S2 = addJacobAffine(G2, G);
-		assert!(jacobPointEuqalTo(S1, S2));
+		assert!(jacobPointEqualTo(S1, S2));
 	}
 
 	#[test]
@@ -633,7 +628,7 @@ mod tests
 		let z = zeroJacob;
 		let S1 = addJacobPoint(z, L);
 		let S2 = addJacobAffine(z, G);
-		assert!(jacobPointEuqalTo(S1, S2));
+		assert!(jacobPointEqualTo(S1, S2));
 	}
 
 	#[test]
@@ -643,7 +638,7 @@ mod tests
 		let G2 = addJacobPoint(L, L);
 		let S1 = addJacobPoint(G2, L);
 		let S2 = timesPoint(G, yU64x4::new(3, 0, 0, 0));
-		assert!(jacobPointEuqalTo(S1, S2));
+		assert!(jacobPointEqualTo(S1, S2));
 	}
 
 	#[test]
@@ -652,7 +647,7 @@ mod tests
 		let r = rand_elem();
 		let S1 = timesPoint(G, r);
 		let S2 = timesBasePoint(r);
-		assert!(jacobPointEuqalTo(S1, S2));
+		assert!(jacobPointEqualTo(S1, S2));
 	}
 
     #[bench]

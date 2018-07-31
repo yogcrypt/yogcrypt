@@ -150,11 +150,9 @@ mod tests
 		let Msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
 
 		let Q = sm2GetPubKey(Da);
-
-		let mut m = sm2GenSign(&Msg, Da, Q, 4);
-
-		for i in 0..1
+		for i in 0..10000
 		{
+			let mut m = sm2GenSign(&Msg, Da, Q, 4);
 			let t = sm2VerSign(&Msg, Q, 4, m.0, m.1);
 			println!("{}",t);
 			assert!(t);
