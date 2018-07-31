@@ -253,11 +253,18 @@ pub fn affineToProj(P: Point) -> ProjPoint
 
 pub fn affineToJacob(P: Point) -> JacobPoint
 {
-	JacobPoint
+	if(!pointEqualToO(P))
 	{
-		x: P.x,
-		y: P.y,
-		z: yU64x4::new(1,0,0,0),
+		JacobPoint
+		{
+			x: P.x,
+			y: P.y,
+			z: yU64x4::new(1,0,0,0),
+		}
+	}
+	else 
+	{
+		zeroJacob
 	}
 }
 
