@@ -212,7 +212,6 @@ mod tests {
         for _ in 0..10000 {
             let mut m = sm2_gen_sign(&msg, d_a, q, 4);
             let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
-            println!("{}", t);
             assert!(t);
         }
     }

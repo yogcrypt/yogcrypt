@@ -152,17 +152,17 @@ fn raw_mul(x: U64x4, y: U64x4) -> [u64; 8] {
     let mut carry: u128 = 0;
 
     // for each result block
-    for (blocki, cell) in result.iter_mut().enumerate().take(7) {
+    for (block_i, cell) in result.iter_mut().enumerate().take(7) {
         // temporary value
         let mut cur: u128 = carry;
         carry = 0;
 
         // enumerate each block of y
-        let low = if blocki > 3 { blocki - 3 } else { 0 };
-        let high = if blocki > 3 { 3 } else { blocki };
+        let low = if block_i > 3 { block_i - 3 } else { 0 };
+        let high = if block_i > 3 { 3 } else { block_i };
 
-        for yi in low..=high {
-            let (rst, c) = helper_mul(x.value[blocki - yi], y.value[yi]);
+        for y_i in low..=high {
+            let (rst, c) = helper_mul(x.value[block_i - y_i], y.value[y_i]);
             carry += c;
             cur += rst;
         }
