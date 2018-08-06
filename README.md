@@ -1,4 +1,4 @@
-#yogcrypt
+# yogcrypt
 
 **A fast, general purpose crypto library in pure rust.**
 
