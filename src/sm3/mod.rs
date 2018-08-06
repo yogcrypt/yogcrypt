@@ -1,202 +1,244 @@
 // Most variable's name are same as those in the Document written by the Encryption Administration
 use std::num::Wrapping;
 
-static IV: [u32; 8] = [0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e];
+static IV: [u32; 8] = [
+    0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e,
+];
 
 #[inline]
-fn SM3_T(j: u32) ->u32 
-{
-	if j<=15
-	{
-		0x79cc4519
-	}
-	else 
-	{
-		0x7a879d8a
-	}
+fn sm3_t(j: u32) -> u32 {
+    if j <= 15 {
+        0x79cc4519
+    } else {
+        0x7a879d8a
+    }
 }
 
 #[inline]
-fn SM3_FF(X: u32, Y: u32, Z: u32, j:u32) -> u32
-{
-	if j<=15
-	{
-		X ^ Y ^ Z
-	}
-	else 
-	{
-		(X & Y) | (X & Z) | (Y & Z)
-	}
+fn sm3_ff(x: u32, y: u32, z: u32, j: u32) -> u32 {
+    if j <= 15 {
+        x ^ y ^ z
+    } else {
+        (x & y) | (x & z) | (y & z)
+    }
 }
 
 #[inline]
-fn SM3_GG(X: u32, Y: u32, Z: u32, j: u32) -> u32
-{
-	if j<=15
-	{
-		X ^ Y ^ Z
-	}
-	else 
-	{
-		(X & Y) | ((!X) & Z)
-	}	
+fn sm3_gg(x: u32, y: u32, z: u32, j: u32) -> u32 {
+    if j <= 15 {
+        x ^ y ^ z
+    } else {
+        (x & y) | ((!x) & z)
+    }
 }
 
 #[inline]
-fn SM3_P_0(X: u32) -> u32
-{
-	X ^ X.rotate_left(9) ^ X.rotate_left(17)
+fn sm3_p_0(x: u32) -> u32 {
+    x ^ x.rotate_left(9) ^ x.rotate_left(17)
 }
 
 #[inline]
-fn SM3_P_1(X: u32) -> u32
-{
-	X ^ X.rotate_left(15) ^ X.rotate_left(23)
+fn sm3_p_1(x: u32) -> u32 {
+    x ^ x.rotate_left(15) ^ x.rotate_left(23)
 }
 
+fn sm3_extend(b: [u32; 16]) -> ([u32; 68], [u32; 64]) {
+    let mut w: [u32; 68] = [0; 68];
+    let mut w_p: [u32; 64] = [0; 64];
+    w[..16].clone_from_slice(&b[..16]);
+    for j in 16..68 {
+        w[j] = sm3_p_1(w[j - 16] ^ w[j - 9] ^ w[j - 3].rotate_left(15))
+            ^ w[j - 13].rotate_left(7)
+            ^ w[j - 6];
+    }
+    for j in 0..64 {
+        w_p[j] = w[j] ^ w[j + 4];
+    }
 
-fn SM3_extend(B: [u32;16]) -> ([u32;68],[u32;64])
-{
-	let mut W: [u32;68] = [0;68];
-	let mut W_p: [u32;64] = [0;64];
-	for j in 0..16
-	{
-		W[j] = B[j];
-	}
-	for j in 16..68
-	{
-		W[j] = SM3_P_1(W[j-16] ^ W[j-9] ^ W[j-3].rotate_left(15)) ^ W[j-13].rotate_left(7) ^ W[j-6];
-	}
-	for j in 0..64
-	{
-		W_p[j] = W[j] ^ W[j+4];
-	}
-
-	(W,W_p)
+    (w, w_p)
 }
 
-fn SM3_CF(Vi: [u32;8], Bi: [u32;16]) -> [u32;8]
-{
-	let Ws = SM3_extend(Bi);
-	let W = Ws.0;
-	let W_p = Ws.1;
+fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
+    let ws = sm3_extend(bi);
+    let w = ws.0;
+    let w_p = ws.1;
 
-	let mut A = Vi[0];
-	let mut B = Vi[1];
-	let mut C = Vi[2];
-	let mut D = Vi[3];
-	let mut E = Vi[4];
-	let mut F = Vi[5];
-	let mut G = Vi[6];
-	let mut H = Vi[7];
+    let mut a = vi[0];
+    let mut b = vi[1];
+    let mut c = vi[2];
+    let mut d = vi[3];
+    let mut e = vi[4];
+    let mut f = vi[5];
+    let mut g = vi[6];
+    let mut h = vi[7];
 
-	let mut SS1 = 0;
-	let mut SS2 = 0;
-	let mut TT1 = 0;
-	let mut TT2 = 0;
+    let mut ss1;
+    let mut ss2;
+    let mut tt1;
+    let mut tt2;
 
-	for j in 0..64
-	{
-		SS1 = (Wrapping(A.rotate_left(12))+Wrapping(E)+Wrapping(SM3_T(j).rotate_left(j%32))).0.rotate_left(7);
-		SS2 = SS1 ^ (A.rotate_left(12));
-		TT1 = (Wrapping(SM3_FF(A,B,C,j))+Wrapping(D)+Wrapping(SS2)+Wrapping(W_p[j as usize])).0;
-		TT2 = (Wrapping(SM3_GG(E,F,G,j))+Wrapping(H)+Wrapping(SS1)+Wrapping(W[j as usize])).0;
-		D = C;
-		C = B.rotate_left(9);
-		B = A;
-		A = TT1;
-		H = G;
-		G = F.rotate_left(19);
-		F = E;
-		E = SM3_P_0(TT2);
-	}
+    for j in 0..64 {
+        ss1 = (Wrapping(a.rotate_left(12)) + Wrapping(e) + Wrapping(sm3_t(j).rotate_left(j % 32)))
+            .0
+            .rotate_left(7);
+        ss2 = ss1 ^ (a.rotate_left(12));
+        tt1 = (Wrapping(sm3_ff(a, b, c, j))
+            + Wrapping(d)
+            + Wrapping(ss2)
+            + Wrapping(w_p[j as usize])).0;
+        tt2 =
+            (Wrapping(sm3_gg(e, f, g, j)) + Wrapping(h) + Wrapping(ss1) + Wrapping(w[j as usize]))
+                .0;
+        d = c;
+        c = b.rotate_left(9);
+        b = a;
+        a = tt1;
+        h = g;
+        g = f.rotate_left(19);
+        f = e;
+        e = sm3_p_0(tt2);
+    }
 
-	let mut Vs: [u32;8] = [0;8];
-	Vs[0] = A ^ Vi[0];
-	Vs[1] = B ^ Vi[1];
-	Vs[2] = C ^ Vi[2];
-	Vs[3] = D ^ Vi[3];
-	Vs[4] = E ^ Vi[4];
-	Vs[5] = F ^ Vi[5];
-	Vs[6] = G ^ Vi[6];
-	Vs[7] = H ^ Vi[7];
+    let mut vs: [u32; 8] = [0; 8];
+    vs[0] = a ^ vi[0];
+    vs[1] = b ^ vi[1];
+    vs[2] = c ^ vi[2];
+    vs[3] = d ^ vi[3];
+    vs[4] = e ^ vi[4];
+    vs[5] = f ^ vi[5];
+    vs[6] = g ^ vi[6];
+    vs[7] = h ^ vi[7];
 
-	Vs
+    vs
 }
 
-macro_rules! copyArray 
-{
-	($v1:ident, $v2:ident,$($i:expr),* ) => ($(v1[i] = v2[i];)*)
+pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
+    let mut msg_len = prim_len;
+    msg_len += 1; // Add "1" to the end of msg
+
+    // to long
+    if msg_len % 512 > 448 {
+        msg_len += (msg_len % 512) + 512;
+    } else {
+        msg_len += msg_len % 512;
+    }
+
+    let msg_len1: u32 = (prim_len / 0x0000_0001_0000_0000) as u32;
+    let msg_len2: u32 = (prim_len % 0x0000_0001_0000_0000) as u32;
+
+    // set V to IV
+    let mut v: [u32; 8] = IV;
+
+    // msg blocks' index;
+    // the operations are the same except the last block
+    for i in 0..msg_len / 512 + 1 {
+        //println!("i={}",i);
+        let mut b: [u32; 16] = [0; 16];
+
+        // words' index in a block
+        for j in 0..16 {
+            if (i * 16 + j) < msg.len() as usize {
+                b[j as usize] = msg[(i * 16 + j) as usize];
+            }
+        }
+
+        // add "1" somewhere in this block
+        if prim_len >= 512 * i && prim_len < 512 * (i + 1) {
+            let mut bias = prim_len % 512;
+
+            let mut bias_of_word = (bias / 32) as u32;
+            let mut bias_of_bit = (bias % 32) as u32;
+            b[bias_of_word as usize] += 0x80000000u32.rotate_right(bias_of_bit);
+        }
+
+        // the last block should store the length of msg
+        if i == (msg_len / 512) {
+            b[14] = msg_len1;
+            b[15] = msg_len2;
+        }
+
+        v = sm3_cf(v, b);
+    }
+
+    v
 }
 
-pub fn sm3Enc(msg: &[u32], primLen: usize) -> [u32;8]
-{
-	let mut msgLen = primLen;
-	msgLen += 1; // Add "1" to the end of msg
+pub fn sm3_enc_to_u8(msg: &[u32], prim_len: usize) -> [u8; 32] {
+    let l = sm3_enc(msg, prim_len);
 
-	if msgLen%512>448 // too long
-	{
-		msgLen += (msgLen%512)+512;
-	}
-	else 
-	{
-		msgLen += msgLen%512;
-	}
-
-	let msgLen1: u32 = (primLen/0x0000_0001_0000_0000) as u32;
-	let msgLen2: u32 = (primLen%0x0000_0001_0000_0000) as u32;
-
-	// set V to IV
-	let mut V: [u32;8] = [0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e];
-
-	for i in 0..msgLen/512+1
-	// msg blocks' index;
-	// the operations are the same except the last block
-	{
-		//println!("i={}",i);
-		let mut B: [u32;16] = [0;16];
-		for j in 0..16 // words' index in a block
-		{
-			if (i*16+j)<msg.len() as usize
-			{
-				B[j as usize] = msg[(i*16+j) as usize];
-			}
-		}
-
-		if primLen+1>512*i&&primLen+1<=512*(i+1) // add "1" somewhere in this block
-		{
-			let mut bias = primLen % 512;
-
-			let mut biasOfWord = (bias / 32) as u32;
-			let mut biasOfBit = (bias % 32) as u32;
-			B[biasOfWord as usize] += 0x80000000u32.rotate_right(biasOfBit);
-		}
-
-		if i==(msgLen/512) // the last block should store the length of msg
-		{
-			B[14] = msgLen1;
-			B[15] = msgLen2;
-		}
-
-		V = SM3_CF(V, B);
-
-	}
-
-	V
+    [
+        (l[0] >> 24) as u8,
+        (l[0] >> 16) as u8,
+        (l[0] >> 8) as u8,
+        l[0] as u8,
+        (l[1] >> 24) as u8,
+        (l[1] >> 16) as u8,
+        (l[1] >> 8) as u8,
+        l[1] as u8,
+        (l[2] >> 24) as u8,
+        (l[2] >> 16) as u8,
+        (l[2] >> 8) as u8,
+        l[2] as u8,
+        (l[3] >> 24) as u8,
+        (l[3] >> 16) as u8,
+        (l[3] >> 8) as u8,
+        l[3] as u8,
+        (l[4] >> 24) as u8,
+        (l[4] >> 16) as u8,
+        (l[4] >> 8) as u8,
+        l[4] as u8,
+        (l[5] >> 24) as u8,
+        (l[5] >> 16) as u8,
+        (l[5] >> 8) as u8,
+        l[5] as u8,
+        (l[6] >> 24) as u8,
+        (l[6] >> 16) as u8,
+        (l[6] >> 8) as u8,
+        l[6] as u8,
+        (l[7] >> 24) as u8,
+        (l[7] >> 16) as u8,
+        (l[7] >> 8) as u8,
+        l[7] as u8,
+    ]
 }
 
-pub fn sm3EncToU8(msg: &[u32], primLen: usize) -> [u8;32]
-{
-	let L = sm3Enc(msg, primLen);
+#[cfg(test)]
+mod tests {
+    extern crate test;
 
-	[
-	(L[0]>>24) as u8, (L[0]>>16) as u8, (L[0]>>8) as u8, L[0] as u8,
-	(L[1]>>24) as u8, (L[1]>>16) as u8, (L[1]>>8) as u8, L[1] as u8,
-	(L[2]>>24) as u8, (L[2]>>16) as u8, (L[2]>>8) as u8, L[2] as u8,
-	(L[3]>>24) as u8, (L[3]>>16) as u8, (L[3]>>8) as u8, L[3] as u8,
-	(L[4]>>24) as u8, (L[4]>>16) as u8, (L[4]>>8) as u8, L[4] as u8,
-	(L[5]>>24) as u8, (L[5]>>16) as u8, (L[5]>>8) as u8, L[5] as u8,
-	(L[6]>>24) as u8, (L[6]>>16) as u8, (L[6]>>8) as u8, L[6] as u8,
-	(L[7]>>24) as u8, (L[7]>>16) as u8, (L[7]>>8) as u8, L[7] as u8,
-	]
+    use self::test::Bencher;
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn test() {
+        let msg: [u32; 16] = [
+            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+            0x61626364, 0x61626364,
+        ];
+
+        let hash = sm3_enc(&msg, 512);
+        println!(
+            "{:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X}",
+            hash[0], hash[1], hash[2], hash[3], hash[4], hash[5], hash[6], hash[7]
+        );
+
+        println!();
+        println!();
+    }
+
+    #[bench]
+    #[ignore]
+    fn bench(b: &mut Bencher) {
+        b.iter(|| {
+            let msg: [u32; 16] = [
+                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+                0x61626364, 0x61626364,
+            ];
+
+            sm3_enc(&msg, 512)
+        });
+    }
 }

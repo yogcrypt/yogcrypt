@@ -1,2 +1,2 @@
-pub mod Fp;
-pub mod Fn;
+pub mod field_n;
+pub mod field_p;
