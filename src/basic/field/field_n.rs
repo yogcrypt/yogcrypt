@@ -36,7 +36,7 @@ macro_rules! overflowing_add {
     };
 }
 
-pub fn trans_fn(mut x: U64x4) -> U64x4 {
+pub fn to_mod_n(mut x: U64x4) -> U64x4 {
     while greater_equal(x, MODULO_N) {
         x = x - MODULO_N;
     }

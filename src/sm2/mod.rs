@@ -114,9 +114,9 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     let mut p_jacobi = times_base_point(k);
     let mut p = jacobi_to_affine(p_jacobi);
 
-    e = trans_fn(e);
+    e = to_mod_n(e);
     let mut r = add_mod_n(e, p.x);
-    let d = trans_fn(d);
+    let d = to_mod_n(d);
 
     // Calculate s = (1+d)^-1 * (k-r*d);
     let s = mul_mod_n(
@@ -180,8 +180,8 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
     let p_jacobi = add_jacobi_point(times_base_point(s), times_point(q, t));
     let p = jacobi_to_affine(p_jacobi);
 
-    let e1 = trans_fn(e);
-    let x1 = trans_fn(p.x);
+    let e1 = to_mod_n(e);
+    let x1 = to_mod_n(p.x);
     let r2 = add_mod_n(e1, x1);
 
     // accept if r2 = r

@@ -36,7 +36,7 @@ macro_rules! overflowing_add {
     };
 }
 
-pub fn to_element(mut x: U64x4) -> U64x4 {
+pub fn to_mod_p(mut x: U64x4) -> U64x4 {
     while greater_equal(x, MODULO_P) {
         x = x - MODULO_P;
     }
@@ -99,15 +99,9 @@ pub fn get_mul_inv(x: U64x4) -> U64x4 {
     }
 
     if equal_to_one(u) {
-        while greater_equal(x1, MODULO_P) {
-            x1 = x1 - MODULO_P;
-        }
-        x1
+        to_mod_p(x1)
     } else {
-        while greater_equal(x2, MODULO_P) {
-            x2 = x2 - MODULO_P;
-        }
-        x2
+        to_mod_p(x2)
     }
 }
 
