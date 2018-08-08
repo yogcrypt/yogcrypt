@@ -19,59 +19,59 @@ fn get_z(q: Point) -> [u32; 8] {
     s[2] = 0x0708090A;
     s[3] = 0x0B0C0D0E;
 
-    s[4] = (ECC_A.value[3] >> 32) as u32;
-    s[5] = ECC_A.value[3] as u32;
-    s[6] = (ECC_A.value[2] >> 32) as u32;
-    s[7] = ECC_A.value[2] as u32;
-    s[8] = (ECC_A.value[1] >> 32) as u32;
-    s[9] = ECC_A.value[1] as u32;
-    s[10] = (ECC_A.value[0] >> 32) as u32;
-    s[11] = ECC_A.value[0] as u32;
+    s[4] = (ECC_A.value(3) >> 32) as u32;
+    s[5] = ECC_A.value(3) as u32;
+    s[6] = (ECC_A.value(2) >> 32) as u32;
+    s[7] = ECC_A.value(2) as u32;
+    s[8] = (ECC_A.value(1) >> 32) as u32;
+    s[9] = ECC_A.value(1) as u32;
+    s[10] = (ECC_A.value(0) >> 32) as u32;
+    s[11] = ECC_A.value(0) as u32;
 
-    s[12] = (ECC_B.value[3] >> 32) as u32;
-    s[13] = ECC_B.value[3] as u32;
-    s[14] = (ECC_B.value[2] >> 32) as u32;
-    s[15] = ECC_B.value[2] as u32;
-    s[16] = (ECC_B.value[1] >> 32) as u32;
-    s[17] = ECC_B.value[1] as u32;
-    s[18] = (ECC_B.value[0] >> 32) as u32;
-    s[19] = ECC_B.value[0] as u32;
+    s[12] = (ECC_B.value(3) >> 32) as u32;
+    s[13] = ECC_B.value(3) as u32;
+    s[14] = (ECC_B.value(2) >> 32) as u32;
+    s[15] = ECC_B.value(2) as u32;
+    s[16] = (ECC_B.value(1) >> 32) as u32;
+    s[17] = ECC_B.value(1) as u32;
+    s[18] = (ECC_B.value(0) >> 32) as u32;
+    s[19] = ECC_B.value(0) as u32;
 
-    s[20] = (ECC_G.x.value[3] >> 32) as u32;
-    s[21] = ECC_G.x.value[3] as u32;
-    s[22] = (ECC_G.x.value[2] >> 32) as u32;
-    s[23] = ECC_G.x.value[2] as u32;
-    s[24] = (ECC_G.x.value[1] >> 32) as u32;
-    s[25] = ECC_G.x.value[1] as u32;
-    s[26] = (ECC_G.x.value[0] >> 32) as u32;
-    s[27] = ECC_G.x.value[0] as u32;
+    s[20] = (ECC_G.x.value(3) >> 32) as u32;
+    s[21] = ECC_G.x.value(3) as u32;
+    s[22] = (ECC_G.x.value(2) >> 32) as u32;
+    s[23] = ECC_G.x.value(2) as u32;
+    s[24] = (ECC_G.x.value(1) >> 32) as u32;
+    s[25] = ECC_G.x.value(1) as u32;
+    s[26] = (ECC_G.x.value(0) >> 32) as u32;
+    s[27] = ECC_G.x.value(0) as u32;
 
-    s[28] = (ECC_G.y.value[3] >> 32) as u32;
-    s[29] = ECC_G.y.value[3] as u32;
-    s[30] = (ECC_G.y.value[2] >> 32) as u32;
-    s[31] = ECC_G.y.value[2] as u32;
-    s[32] = (ECC_G.y.value[1] >> 32) as u32;
-    s[33] = ECC_G.y.value[1] as u32;
-    s[34] = (ECC_G.y.value[0] >> 32) as u32;
-    s[35] = ECC_G.y.value[0] as u32;
+    s[28] = (ECC_G.y.value(3) >> 32) as u32;
+    s[29] = ECC_G.y.value(3) as u32;
+    s[30] = (ECC_G.y.value(2) >> 32) as u32;
+    s[31] = ECC_G.y.value(2) as u32;
+    s[32] = (ECC_G.y.value(1) >> 32) as u32;
+    s[33] = ECC_G.y.value(1) as u32;
+    s[34] = (ECC_G.y.value(0) >> 32) as u32;
+    s[35] = ECC_G.y.value(0) as u32;
 
-    s[36] = (q.x.value[3] >> 32) as u32;
-    s[37] = q.x.value[3] as u32;
-    s[38] = (q.x.value[2] >> 32) as u32;
-    s[39] = q.x.value[2] as u32;
-    s[40] = (q.x.value[1] >> 32) as u32;
-    s[41] = q.x.value[1] as u32;
-    s[42] = (q.x.value[0] >> 32) as u32;
-    s[43] = q.x.value[0] as u32;
+    s[36] = (q.x.value(3) >> 32) as u32;
+    s[37] = q.x.value(3) as u32;
+    s[38] = (q.x.value(2) >> 32) as u32;
+    s[39] = q.x.value(2) as u32;
+    s[40] = (q.x.value(1) >> 32) as u32;
+    s[41] = q.x.value(1) as u32;
+    s[42] = (q.x.value(0) >> 32) as u32;
+    s[43] = q.x.value(0) as u32;
 
-    s[44] = (q.y.value[3] >> 32) as u32;
-    s[45] = q.y.value[3] as u32;
-    s[46] = (q.y.value[2] >> 32) as u32;
-    s[47] = q.y.value[2] as u32;
-    s[48] = (q.y.value[1] >> 32) as u32;
-    s[49] = q.y.value[1] as u32;
-    s[50] = (q.y.value[0] >> 32) as u32;
-    s[51] = q.y.value[0] as u32;
+    s[44] = (q.y.value(3) >> 32) as u32;
+    s[45] = q.y.value(3) as u32;
+    s[46] = (q.y.value(2) >> 32) as u32;
+    s[47] = q.y.value(2) as u32;
+    s[48] = (q.y.value(1) >> 32) as u32;
+    s[49] = q.y.value(1) as u32;
+    s[50] = (q.y.value(0) >> 32) as u32;
+    s[51] = q.y.value(0) as u32;
 
     //Z = sm3Enc(&s[0..52], 52 * 32)
     sm3_enc(&s[0..52], 52 * 32)
@@ -115,7 +115,7 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     let mut p = jacobi_to_affine(p_jacobi);
 
     e = to_mod_n(e);
-    let mut r = add_mod_n(e, p.x);
+    let mut r = add_mod_n(e, p.x.num);
     let d = to_mod_n(d);
 
     // Calculate s = (1+d)^-1 * (k-r*d);
@@ -141,7 +141,7 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
         }
         p_jacobi = times_base_point(k);
         p = jacobi_to_affine(p_jacobi);
-        r = add_mod_n(e, p.x);
+        r = add_mod_n(e, p.x.num);
     }
 
     (r, s)
@@ -181,7 +181,7 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
     let p = jacobi_to_affine(p_jacobi);
 
     let e1 = to_mod_n(e);
-    let x1 = to_mod_n(p.x);
+    let x1 = to_mod_n(p.x.num);
     let r2 = add_mod_n(e1, x1);
 
     // accept if r2 = r
