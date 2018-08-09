@@ -208,6 +208,19 @@ mod tests {
 
     #[test]
     fn test() {
+        // the following examples are from the standard documentation
+        // of SM3 found at http://www.oscca.gov.cn/sca/xxgk/bzgf.shtml
+        let msg = [0x61_626300u32];
+
+        let hash = sm3_enc(&msg, 24);
+        assert_eq!(
+            hash,
+            [
+                0x66c7f0f4, 0x62eeedd9, 0xd1f2d46b, 0xdc10e4e2, 0x4167c487, 0x5cf2f7a2, 0x297da02b,
+                0x8f4ba8e0
+            ]
+        );
+
         let msg: [u32; 16] = [
             0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
             0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
@@ -215,12 +228,12 @@ mod tests {
         ];
 
         let hash = sm3_enc(&msg, 512);
-        println!(
-            "{:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X}",
-            hash[0], hash[1], hash[2], hash[3], hash[4], hash[5], hash[6], hash[7]
+        assert_eq!(
+            hash,
+            [
+                0xdebe9ff9, 0x2275b8a1, 0x38604889, 0xc18e5a4d, 0x6fdb70e5, 0x387e5765, 0x293dcba3,
+                0x9c0c5732
+            ]
         );
-
-        println!();
-        println!();
     }
 }
