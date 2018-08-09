@@ -275,11 +275,7 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
 
 #[cfg(test)]
 mod tests {
-    extern crate rand;
-    extern crate test;
-
     use rand::random;
-    use self::test::Bencher;
     use super::*;
 
     fn rand_elem() -> FieldElement {
@@ -303,34 +299,10 @@ mod tests {
         assert!(equal_to(c.num, U64x4::new(ra * rb, 0, 0, 0)));
     }
 
-    #[bench]
-    fn bench_mul(ben: &mut Bencher) {
-        let a = rand_elem();
-
-        let b = rand_elem();
-
-        ben.iter(|| a * b)
-    }
-
     #[test]
     fn test_inversion() {
         let a = rand_elem();
         let b = get_mul_inv(a);
         assert!(equal_to((a * b).num, U64x4::new(1, 0, 0, 0)));
-    }
-
-    #[bench]
-    fn bench_inversion(ben: &mut Bencher) {
-        let a = rand_elem();
-        ben.iter(|| {
-            get_mul_inv(a);
-        })
-    }
-
-    #[bench]
-    fn bench_add(ben: &mut Bencher) {
-        let a = rand_elem();
-        let b = rand_elem();
-        ben.iter(|| a + b)
     }
 }

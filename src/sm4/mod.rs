@@ -289,14 +289,10 @@ pub fn sm4_dec(r_k: &[u32], c_txt: &[u32; 4]) -> [u32; 4] {
 }
 
 #[cfg(test)]
-mod tests {
-    extern crate test;
-
-    use self::test::Bencher;
+mod test {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test() {
         let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
         let r = get_sm4_r_k(&m);
@@ -315,20 +311,5 @@ mod tests {
             p_txt2[0], p_txt2[1], p_txt2[2], p_txt2[3]
         );
         assert_eq!(p_txt, p_txt2);
-    }
-
-    #[bench]
-    #[ignore]
-    fn bench(b: &mut Bencher) {
-        b.iter(|| {
-            let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-            let r = get_sm4_r_k(&m);
-            let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-            let c_txt = sm4_enc(&r, &p_txt);
-
-            let p_txt2 = sm4_dec(&r, &c_txt);
-            assert_eq!(p_txt, p_txt2);
-        });
     }
 }

@@ -190,13 +190,9 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
 
 #[cfg(test)]
 mod tests {
-    extern crate test;
-
-    use self::test::Bencher;
     use super::*;
 
     #[test]
-    #[ignore]
     fn test() {
         // prepare constants
         let d_a = U64x4::new(
@@ -214,46 +210,5 @@ mod tests {
             let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
             assert!(t);
         }
-    }
-
-    #[bench]
-    #[ignore]
-    fn bench_gen_sign(ben: &mut Bencher) {
-        let d_a = U64x4::new(
-            0x0C23661D15897263,
-            0x2A519A55171B1B65,
-            0x068C8D803DFF7979,
-            0x128B2FA8BD433C6C,
-        );
-
-        let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-        let q = get_pub_key(d_a);
-
-        ben.iter(|| {
-            sm2_gen_sign(&msg, d_a, q, 4);
-        });
-    }
-
-    #[bench]
-    #[ignore]
-    fn bench_ver_sign(ben: &mut Bencher) {
-        let d_a = U64x4::new(
-            0x0C23661D15897263,
-            0x2A519A55171B1B65,
-            0x068C8D803DFF7979,
-            0x128B2FA8BD433C6C,
-        );
-
-        let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-        let q = get_pub_key(d_a);
-
-        let m = sm2_gen_sign(&msg, d_a, q, 4);
-
-        ben.iter(|| {
-            let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
-            assert!(t);
-        });
     }
 }

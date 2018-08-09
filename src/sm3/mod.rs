@@ -203,14 +203,10 @@ pub fn sm3_enc_to_u8(msg: &[u32], prim_len: usize) -> [u8; 32] {
 }
 
 #[cfg(test)]
-mod tests {
-    extern crate test;
-
-    use self::test::Bencher;
+mod test {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test() {
         let msg: [u32; 16] = [
             0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
@@ -226,19 +222,5 @@ mod tests {
 
         println!();
         println!();
-    }
-
-    #[bench]
-    #[ignore]
-    fn bench(b: &mut Bencher) {
-        b.iter(|| {
-            let msg: [u32; 16] = [
-                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                0x61626364, 0x61626364,
-            ];
-
-            sm3_enc(&msg, 512)
-        });
     }
 }

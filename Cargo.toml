@@ -8,6 +8,9 @@ description = """
 A high-performance, general purpose crypto library
 """
 
+[[bench]]
+name = "yogcrypt_benchmarks"
+
 [dependencies]
 rand = "0.5.4"
 lazy_static = "1.0.2"

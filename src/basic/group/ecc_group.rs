@@ -438,14 +438,10 @@ pub fn times_base_point(times: U64x4) -> JacobiPoint {
 
 #[cfg(test)]
 mod tests {
-    extern crate rand;
-    extern crate test;
-
     use rand::random;
-    use self::test::Bencher;
     use super::*;
 
-    fn rand_elem() -> U64x4 {
+    fn rand_u64x4() -> U64x4 {
         U64x4::new(
             random::<u64>(),
             random::<u64>(),
@@ -483,25 +479,9 @@ mod tests {
 
     #[test]
     fn test_base_times() {
-        let r = rand_elem();
+        let r = rand_u64x4();
         let s1 = times_point(ECC_G, r);
         let s2 = times_base_point(r);
         assert!(jacobi_point_equal_to(s1, s2));
-    }
-
-    #[bench]
-    fn bench_times(ben: &mut Bencher) {
-        let r = rand_elem();
-        ben.iter(|| {
-            times_point(ECC_G, r);
-        })
-    }
-
-    #[bench]
-    fn bench_times_base(ben: &mut Bencher) {
-        let r = rand_elem();
-        ben.iter(|| {
-            times_base_point(r);
-        })
     }
 }
