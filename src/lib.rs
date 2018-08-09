@@ -9,7 +9,6 @@
 // single characters names are used in accordance to
 // documentation of cryptographic schemes
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
-#![feature(test)]
 extern crate rand;
 
 #[macro_use]
