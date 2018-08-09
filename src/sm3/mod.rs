@@ -123,7 +123,7 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
         msg_len += msg_len % 512;
     }
 
-    let msg_len1: u32 = (prim_len >> 16) as u32;
+    let msg_len1: u32 = (prim_len >> 32) as u32;
     let msg_len2: u32 = (prim_len & 0xFFFF_FFFF) as u32;
 
     // set V to IV
