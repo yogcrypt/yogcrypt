@@ -275,8 +275,8 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
 
 #[cfg(test)]
 mod tests {
-    use rand::random;
     use super::*;
+    use rand::random;
 
     fn rand_elem() -> FieldElement {
         FieldElement::from_u64([

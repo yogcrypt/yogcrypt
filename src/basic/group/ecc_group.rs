@@ -438,8 +438,8 @@ pub fn times_base_point(times: U64x4) -> JacobiPoint {
 
 #[cfg(test)]
 mod tests {
-    use rand::random;
     use super::*;
+    use rand::random;
 
     fn rand_u64x4() -> U64x4 {
         U64x4::new(

@@ -1,15 +1,15 @@
 #![feature(test)]
+extern crate rand;
 extern crate test;
 extern crate yogcrypt;
-extern crate rand;
 
-use test::Bencher;
 use rand::random;
+use test::Bencher;
 use yogcrypt::basic::cell::u64x4::*;
 
 mod sm2_benches {
-    use yogcrypt::sm2::*;
     use super::*;
+    use yogcrypt::sm2::*;
 
     #[bench]
     fn bench_gen_sign(ben: &mut Bencher) {
@@ -52,8 +52,8 @@ mod sm2_benches {
 }
 
 mod sm3_benches {
-    use yogcrypt::sm3::*;
     use super::*;
+    use yogcrypt::sm3::*;
 
     #[bench]
     fn bench(b: &mut Bencher) {
@@ -70,8 +70,8 @@ mod sm3_benches {
 }
 
 mod sm4_benches {
-    use yogcrypt::sm4::*;
     use super::*;
+    use yogcrypt::sm4::*;
 
     #[bench]
     fn bench(b: &mut Bencher) {
@@ -89,8 +89,8 @@ mod sm4_benches {
 }
 
 mod ecc_group_benches {
-    use yogcrypt::basic::group::ecc_group::*;
     use super::*;
+    use yogcrypt::basic::group::ecc_group::*;
 
     fn rand_u64x4() -> U64x4 {
         U64x4::new(
@@ -119,8 +119,8 @@ mod ecc_group_benches {
 }
 
 mod field_p_benches {
-    use yogcrypt::basic::field::field_p::*;
     use super::*;
+    use yogcrypt::basic::field::field_p::*;
 
     fn rand_elem() -> FieldElement {
         FieldElement::from_u64([
