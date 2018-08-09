@@ -1,12 +1,13 @@
 [package]
 name = "yogcrypt"
 version = "0.1.0"
-authors = ["The yogcrypt Project Contributors"]
+authors = ["The Yogcrypt Project Contributors"]
 readme = "README.md"
 license = "MIT/Apache-2.0"
-description = """
-A high-performance, general purpose crypto library
-"""
+repository = "https://github.com/yogcrypt/yogcrypt"
+categories = ["cryptography"]
+keywords = ["cryptography", "sm2", "sm3", "sm4"]
+description = "A high-performance, general purpose crypto library in Rust"
 
 [[bench]]
 name = "yogcrypt_benchmarks"
