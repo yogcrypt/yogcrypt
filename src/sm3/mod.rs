@@ -131,7 +131,7 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
 
     // msg blocks' index;
     // the operations are the same except the last block
-    for i in 0..msg_len / 512 + 1 {
+    for i in 0..=msg_len / 512 {
         //println!("i={}",i);
         let mut b: [u32; 16] = [0; 16];
 
@@ -146,9 +146,9 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
         if prim_len >= 512 * i && prim_len < 512 * (i + 1) {
             let mut bias = prim_len % 512;
 
-            let mut bias_of_word = (bias / 32) as u32;
+            let mut bias_of_word = bias / 32;
             let mut bias_of_bit = (bias % 32) as u32;
-            b[bias_of_word as usize] += 0x80000000u32.rotate_right(bias_of_bit);
+            b[bias_of_word] += 0x80000000u32.rotate_right(bias_of_bit);
         }
 
         // the last block should store the length of msg
