@@ -68,7 +68,7 @@ pub const ZERO_JACOBI: JacobiPoint = JacobiPoint {
 };
 
 lazy_static! {
-    static ref low_table: Vec<Point> = {
+    static ref LOW_TABLE: Vec<Point> = {
         // save G, 2G, 4G, ... for later use
         let g_jacobi = affine_to_jacobi(ECC_G);
         let mut pow_g: Vec<JacobiPoint> = vec![g_jacobi];
@@ -102,7 +102,7 @@ lazy_static! {
         table
     };
 
-    static ref high_table: Vec<Point> = {
+    static ref HIGH_TABLE: Vec<Point> = {
         // save G, 2G, 4G, ... for later use
         let g_jacobi = affine_to_jacobi(ECC_G);
         let mut pow_g: Vec<JacobiPoint> = vec![g_jacobi];
@@ -430,8 +430,8 @@ pub fn times_base_point(times: U64x4) -> JacobiPoint {
         t = add_jacobi_point(t, t);
         let index_low = to_index(times, i);
         let index_high = to_index(times, i + 16);
-        t = add_jacobi_affine(t, low_table[index_low]);
-        t = add_jacobi_affine(t, high_table[index_high]);
+        t = add_jacobi_affine(t, LOW_TABLE[index_low]);
+        t = add_jacobi_affine(t, HIGH_TABLE[index_high]);
     }
     t
 }

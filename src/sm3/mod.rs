@@ -123,8 +123,8 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
         msg_len += msg_len % 512;
     }
 
-    let msg_len1: u32 = (prim_len / 0x0000_0001_0000_0000) as u32;
-    let msg_len2: u32 = (prim_len % 0x0000_0001_0000_0000) as u32;
+    let msg_len1: u32 = (prim_len >> 16) as u32;
+    let msg_len2: u32 = (prim_len & 0xFFFF_FFFF) as u32;
 
     // set V to IV
     let mut v: [u32; 8] = IV;
@@ -137,8 +137,8 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
 
         // words' index in a block
         for j in 0..16 {
-            if (i * 16 + j) < msg.len() as usize {
-                b[j as usize] = msg[(i * 16 + j) as usize];
+            if (i * 16 + j) < msg.len() {
+                b[j] = msg[(i * 16 + j)];
             }
         }
 
