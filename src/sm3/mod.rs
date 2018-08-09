@@ -203,7 +203,7 @@ pub fn sm3_enc_to_u8(msg: &[u32], prim_len: usize) -> [u8; 32] {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

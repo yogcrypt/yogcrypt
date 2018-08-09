@@ -289,7 +289,7 @@ pub fn sm4_dec(r_k: &[u32], c_txt: &[u32; 4]) -> [u32; 4] {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
