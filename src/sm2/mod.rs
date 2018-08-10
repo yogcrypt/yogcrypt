@@ -192,21 +192,26 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
 mod tests {
     use super::*;
 
+    fn rand_u64x4() -> U64x4 {
+        U64x4::new(
+            random::<u64>(),
+            random::<u64>(),
+            random::<u64>(),
+            random::<u64>(),
+        )
+    }
+
     #[test]
     fn test() {
-        // prepare constants
-        let d_a = U64x4::new(
-            0x0C23661D15897263,
-            0x2A519A55171B1B65,
-            0x068C8D803DFF7979,
-            0x128B2FA8BD433C6C,
-        );
-
-        let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-        let q = get_pub_key(d_a);
         for _ in 0..10000 {
+            let d_a = rand_u64x4();
+
+            let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+
+            let q = get_pub_key(d_a);
+
             let mut m = sm2_gen_sign(&msg, d_a, q, 4);
+
             let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
             assert!(t);
         }

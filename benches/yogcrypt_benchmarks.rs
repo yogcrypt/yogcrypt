@@ -7,43 +7,47 @@ use criterion::Criterion;
 use rand::random;
 use yogcrypt::basic::cell::u64x4::*;
 
+fn rand_u64x4() -> U64x4 {
+    U64x4::new(
+        random::<u64>(),
+        random::<u64>(),
+        random::<u64>(),
+        random::<u64>(),
+    )
+}
+
 mod sm2_benches {
     use super::*;
     use yogcrypt::sm2::*;
 
     fn bench_gen_sign(c: &mut Criterion) {
-        let d_a = U64x4::new(
-            0x0C23661D15897263,
-            0x2A519A55171B1B65,
-            0x068C8D803DFF7979,
-            0x128B2FA8BD433C6C,
-        );
-
-        let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-        let q = get_pub_key(d_a);
-
         c.bench_function("sm2::gen_sign", move |b| {
-            b.iter(|| sm2_gen_sign(&msg, d_a, q, 4))
+            b.iter_with_setup(
+                || {
+                    let d_a = rand_u64x4();
+
+                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+                    let q = get_pub_key(d_a);
+                    (d_a, msg, q)
+                },
+                |(d_a, msg, q)| sm2_gen_sign(&msg, d_a, q, 4),
+            )
         });
     }
 
     fn bench_ver_sign(c: &mut Criterion) {
-        let d_a = U64x4::new(
-            0x0C23661D15897263,
-            0x2A519A55171B1B65,
-            0x068C8D803DFF7979,
-            0x128B2FA8BD433C6C,
-        );
-
-        let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-
-        let q = get_pub_key(d_a);
-
         c.bench_function("sm2::ver_sign", move |b| {
             b.iter_with_setup(
-                || sm2_gen_sign(&msg, d_a, q, 4),
-                |signature| {
+                || {
+                    let d_a = rand_u64x4();
+
+                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+
+                    let q = get_pub_key(d_a);
+
+                    (msg, q, sm2_gen_sign(&msg, d_a, q, 4))
+                },
+                |(msg, q, signature)| {
                     let t = sm2_ver_sign(&msg, q, 4, signature.0, signature.1);
                     assert!(t);
                 },
@@ -118,15 +122,6 @@ mod sm4_benches {
 mod ecc_group_benches {
     use super::*;
     use yogcrypt::basic::group::ecc_group::*;
-
-    fn rand_u64x4() -> U64x4 {
-        U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        )
-    }
 
     fn bench_times(c: &mut Criterion) {
         c.bench_function("ecc_group::times_point", move |b| {
