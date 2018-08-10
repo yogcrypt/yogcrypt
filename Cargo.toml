@@ -11,6 +11,10 @@ description = "A high-performance, general purpose crypto library in Rust"
 
 [[bench]]
 name = "yogcrypt_benchmarks"
+harness = false
+
+[dev-dependencies]
+criterion = "0.2"
 
 [dependencies]
 rand = "0.5.4"

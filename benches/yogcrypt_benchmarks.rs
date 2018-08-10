@@ -1,18 +1,17 @@
-#![feature(test)]
 extern crate rand;
-extern crate test;
+#[macro_use]
+extern crate criterion;
 extern crate yogcrypt;
 
+use criterion::Criterion;
 use rand::random;
-use test::Bencher;
 use yogcrypt::basic::cell::u64x4::*;
 
 mod sm2_benches {
     use super::*;
     use yogcrypt::sm2::*;
 
-    #[bench]
-    fn bench_gen_sign(ben: &mut Bencher) {
+    fn bench_gen_sign(c: &mut Criterion) {
         let d_a = U64x4::new(
             0x0C23661D15897263,
             0x2A519A55171B1B65,
@@ -24,13 +23,12 @@ mod sm2_benches {
 
         let q = get_pub_key(d_a);
 
-        ben.iter(|| {
-            sm2_gen_sign(&msg, d_a, q, 4);
+        c.bench_function("sm2::gen_sign", move |b| {
+            b.iter(|| sm2_gen_sign(&msg, d_a, q, 4))
         });
     }
 
-    #[bench]
-    fn bench_ver_sign(ben: &mut Bencher) {
+    fn bench_ver_sign(c: &mut Criterion) {
         let d_a = U64x4::new(
             0x0C23661D15897263,
             0x2A519A55171B1B65,
@@ -42,50 +40,79 @@ mod sm2_benches {
 
         let q = get_pub_key(d_a);
 
-        let m = sm2_gen_sign(&msg, d_a, q, 4);
-
-        ben.iter(|| {
-            let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
-            assert!(t);
+        c.bench_function("sm2::ver_sign", move |b| {
+            b.iter_with_setup(
+                || sm2_gen_sign(&msg, d_a, q, 4),
+                |signature| {
+                    let t = sm2_ver_sign(&msg, q, 4, signature.0, signature.1);
+                    assert!(t);
+                },
+            )
         });
     }
+
+    criterion_group!(
+        benches,
+        sm2_benches::bench_gen_sign,
+        sm2_benches::bench_ver_sign
+    );
 }
 
 mod sm3_benches {
     use super::*;
     use yogcrypt::sm3::*;
 
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        b.iter(|| {
-            let msg: [u32; 16] = [
-                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                0x61626364, 0x61626364,
-            ];
+    fn bench(c: &mut Criterion) {
+        c.bench_function("sm3::hash", move |b| {
+            b.iter(|| {
+                let msg: [u32; 16] = [
+                    0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+                    0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
+                    0x61626364, 0x61626364, 0x61626364, 0x61626364,
+                ];
 
-            sm3_enc(&msg, 512)
+                sm3_enc(&msg, 512)
+            });
         });
     }
+    criterion_group!(benches, sm3_benches::bench);
 }
 
 mod sm4_benches {
     use super::*;
     use yogcrypt::sm4::*;
 
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        b.iter(|| {
-            let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-            let r = get_sm4_r_k(&m);
-            let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+    fn bench_enc(c: &mut Criterion) {
+        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
 
-            let c_txt = sm4_enc(&r, &p_txt);
-
-            let p_txt2 = sm4_dec(&r, &c_txt);
-            assert_eq!(p_txt, p_txt2);
+        c.bench_function("sm4::enc", move |b| {
+            b.iter(|| {
+                let r = get_sm4_r_k(&m);
+                sm4_enc(&r, &p_txt);
+            });
         });
     }
+
+    fn bench_dec(c: &mut Criterion) {
+        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+
+        c.bench_function("sm4::dec", move |b| {
+            b.iter_with_setup(
+                || {
+                    let r = get_sm4_r_k(&m);
+                    (r, sm4_enc(&r, &p_txt))
+                },
+                |(r, c_txt)| {
+                    let p_txt2 = sm4_dec(&r, &c_txt);
+                    assert_eq!(p_txt, p_txt2);
+                },
+            )
+        });
+    }
+    criterion_group!(benches, sm4_benches::bench_enc, sm4_benches::bench_dec);
+
 }
 
 mod ecc_group_benches {
@@ -101,21 +128,32 @@ mod ecc_group_benches {
         )
     }
 
-    #[bench]
-    fn bench_times(ben: &mut Bencher) {
-        let r = rand_u64x4();
-        ben.iter(|| {
-            times_point(ECC_G, r);
-        })
+    fn bench_times(c: &mut Criterion) {
+        c.bench_function("ecc_group::times_point", move |b| {
+            b.iter_with_setup(
+                || rand_u64x4(),
+                |r| {
+                    times_point(ECC_G, r);
+                },
+            )
+        });
     }
 
-    #[bench]
-    fn bench_times_base(ben: &mut Bencher) {
-        let r = rand_u64x4();
-        ben.iter(|| {
-            times_base_point(r);
-        })
+    fn bench_times_base(c: &mut Criterion) {
+        c.bench_function("ecc_group::times_base_point", move |b| {
+            b.iter_with_setup(
+                || rand_u64x4(),
+                |r| {
+                    times_base_point(r);
+                },
+            )
+        });
     }
+    criterion_group!(
+        benches,
+        ecc_group_benches::bench_times,
+        ecc_group_benches::bench_times_base
+    );
 }
 
 mod field_p_benches {
@@ -131,27 +169,41 @@ mod field_p_benches {
         ])
     }
 
-    #[bench]
-    fn bench_mul(ben: &mut Bencher) {
-        let a = rand_elem();
-
-        let b = rand_elem();
-
-        ben.iter(|| a * b)
+    fn bench_mul(c: &mut Criterion) {
+        c.bench_function("field_p::mul", move |b| {
+            b.iter_with_setup(|| (rand_elem(), rand_elem()), |(a, b)| a * b)
+        });
     }
 
-    #[bench]
-    fn bench_inversion(ben: &mut Bencher) {
-        let a = rand_elem();
-        ben.iter(|| {
-            get_mul_inv(a);
-        })
+    fn bench_inversion(c: &mut Criterion) {
+        c.bench_function("field_p::inv", move |b| {
+            b.iter_with_setup(
+                || rand_elem(),
+                |a| {
+                    get_mul_inv(a);
+                },
+            )
+        });
     }
 
-    #[bench]
-    fn bench_add(ben: &mut Bencher) {
-        let a = rand_elem();
-        let b = rand_elem();
-        ben.iter(|| a + b)
+    fn bench_add(c: &mut Criterion) {
+        c.bench_function("field_p:add", move |b| {
+            b.iter_with_setup(|| (rand_elem(), rand_elem()), |(a, b)| a + b)
+        });
     }
+
+    criterion_group!(
+        benches,
+        field_p_benches::bench_mul,
+        field_p_benches::bench_inversion,
+        field_p_benches::bench_add
+    );
 }
+
+criterion_main!(
+    sm2_benches::benches,
+    sm3_benches::benches,
+    sm4_benches::benches,
+    ecc_group_benches::benches,
+    field_p_benches::benches
+);
