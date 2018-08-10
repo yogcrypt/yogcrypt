@@ -169,14 +169,11 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
         u64::from(e[1]) | (u64::from(e[0]) << 32),
     );
 
-    if equal_to_zero(r) || greater_equal(r, MODULO_N) {
-        return false;
-    }
-    if equal_to_zero(s) || greater_equal(s, MODULO_N) {
+    let t = add_mod_n(r, s);
+    if equal_to_zero(t) {
         return false;
     }
 
-    let t = add_mod_n(r, s);
     let p_jacobi = add_jacobi_point(times_base_point(s), times_point(q, t));
     let p = jacobi_to_affine(p_jacobi);
 
