@@ -8,7 +8,7 @@ YogCrypt currently provides three cryptographic algorithms in Chinese National
 Standard, namely the SM2 cryptographic asymmetric algorithm, the SM3
 cryptographic hash algorithm, and the SM4 block cipher algorithm.
 
-# License
+## License
 
 YogCrypt is distributed under the terms of both the MIT license and the Apache
 License (Version 2.0).
