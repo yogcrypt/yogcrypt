@@ -210,7 +210,7 @@ mod tests {
     fn test() {
         // the following examples are from the standard documentation
         // of SM3 found at http://www.oscca.gov.cn/sca/xxgk/bzgf.shtml
-        let msg = [0x61_626300u32];
+        let msg = [0x6162_6300u32];
 
         let hash = sm3_enc(&msg, 24);
         assert_eq!(
