@@ -74,7 +74,7 @@ fn get_z(q: Point) -> [u32; 8] {
     s[51] = q.y.value(0) as u32;
 
     //Z = sm3Enc(&s[0..52], 52 * 32)
-    sm3_enc(&s[0..52], 52 * 32)
+    sm3_enc_inner(&s[0..52], 52 * 32)
 }
 
 pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x4) {
@@ -87,7 +87,7 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     let m = [msg, &z].concat();
 
     // compute the hash value
-    let e = sm3_enc(&m, (len + 8) * 32);
+    let e = sm3_enc_inner(&m, (len + 8) * 32);
     let mut e = U64x4::new(
         u64::from(e[7]) | (u64::from(e[6]) << 32),
         u64::from(e[5]) | (u64::from(e[4]) << 32),
@@ -161,7 +161,7 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
     let z_a = get_z(q);
     let m = [msg, &z_a].concat();
 
-    let e = sm3_enc(&m, (len + 8) * 32);
+    let e = sm3_enc_inner(&m, (len + 8) * 32);
     let e = U64x4::new(
         u64::from(e[7]) | (u64::from(e[6]) << 32),
         u64::from(e[5]) | (u64::from(e[4]) << 32),

@@ -112,7 +112,34 @@ fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
     vs
 }
 
-pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
+pub fn sm3_enc(msg: &[u8]) -> [u32; 8] {
+    // bit length = msg.len() * 8
+    let bit_len = msg.len() << 3;
+    // length for [u32] is ceil(msg.len() / 4)
+    let mut msg2: Vec<u32> = vec![];
+    for index in 0..((msg.len() + 3) / 4) {
+        #[inline(always)]
+        fn group_as_u32(msg: &[u8], i: usize) -> u32 {
+            #[inline(always)]
+            fn unpack(o: Option<&u8>) -> u32 {
+                match o {
+                    None => 0u32,
+                    Some(&a) => a as u32,
+                }
+            }
+            let start = i * 4;
+            (unpack(msg.get(start)) << 24)
+                + (unpack(msg.get(start + 1)) << 16)
+                + (unpack(msg.get(start + 2)) << 8)
+                + unpack(msg.get(start + 3))
+        }
+        msg2.push(group_as_u32(msg, index));
+    }
+
+    sm3_enc_inner(&msg2[..], bit_len)
+}
+
+pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> [u32; 8] {
     let mut msg_len = prim_len;
     msg_len += 1; // Add "1" to the end of msg
 
@@ -163,45 +190,6 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
     v
 }
 
-pub fn sm3_enc_to_u8(msg: &[u32], prim_len: usize) -> [u8; 32] {
-    let l = sm3_enc(msg, prim_len);
-
-    [
-        (l[0] >> 24) as u8,
-        (l[0] >> 16) as u8,
-        (l[0] >> 8) as u8,
-        l[0] as u8,
-        (l[1] >> 24) as u8,
-        (l[1] >> 16) as u8,
-        (l[1] >> 8) as u8,
-        l[1] as u8,
-        (l[2] >> 24) as u8,
-        (l[2] >> 16) as u8,
-        (l[2] >> 8) as u8,
-        l[2] as u8,
-        (l[3] >> 24) as u8,
-        (l[3] >> 16) as u8,
-        (l[3] >> 8) as u8,
-        l[3] as u8,
-        (l[4] >> 24) as u8,
-        (l[4] >> 16) as u8,
-        (l[4] >> 8) as u8,
-        l[4] as u8,
-        (l[5] >> 24) as u8,
-        (l[5] >> 16) as u8,
-        (l[5] >> 8) as u8,
-        l[5] as u8,
-        (l[6] >> 24) as u8,
-        (l[6] >> 16) as u8,
-        (l[6] >> 8) as u8,
-        l[6] as u8,
-        (l[7] >> 24) as u8,
-        (l[7] >> 16) as u8,
-        (l[7] >> 8) as u8,
-        l[7] as u8,
-    ]
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,9 +198,9 @@ mod tests {
     fn test() {
         // the following examples are from the standard documentation
         // of SM3 found at http://www.oscca.gov.cn/sca/xxgk/bzgf.shtml
-        let msg = [0x6162_6300u32];
+        let msg = b"abc";
 
-        let hash = sm3_enc(&msg, 24);
+        let hash = sm3_enc(msg);
         assert_eq!(
             hash,
             [
@@ -221,13 +209,9 @@ mod tests {
             ]
         );
 
-        let msg: [u32; 16] = [
-            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-            0x61626364, 0x61626364,
-        ];
+        let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
 
-        let hash = sm3_enc(&msg, 512);
+        let hash = sm3_enc(msg);
         assert_eq!(
             hash,
             [
