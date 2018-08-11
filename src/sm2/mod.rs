@@ -2,7 +2,6 @@ use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
-use rand::random;
 use sm3::*;
 
 pub fn get_pub_key(d: U64x4) -> Point {
@@ -96,19 +95,9 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     );
 
     // ephemeral key
-    let mut k = U64x4::new(
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-    );
+    let mut k = U64x4::random();
     while greater_equal(k, MODULO_P) {
-        k = U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        );
+        k = U64x4::random();
     }
 
     let mut p_jacobi = times_base_point(k);
@@ -125,19 +114,9 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     );
 
     while equal_to_zero(r) || equal_to_zero(add_mod_n(r, k)) || equal_to_zero(s) {
-        k = U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        );
+        k = U64x4::random();
         while greater_equal(k, MODULO_P) {
-            k = U64x4::new(
-                random::<u64>(),
-                random::<u64>(),
-                random::<u64>(),
-                random::<u64>(),
-            );
+            k = U64x4::random();
         }
         p_jacobi = times_base_point(k);
         p = jacobi_to_affine(p_jacobi);
@@ -189,19 +168,10 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
 mod tests {
     use super::*;
 
-    fn rand_u64x4() -> U64x4 {
-        U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        )
-    }
-
     #[test]
     fn test() {
         for _ in 0..10000 {
-            let d_a = rand_u64x4();
+            let d_a = U64x4::random();
 
             let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
 

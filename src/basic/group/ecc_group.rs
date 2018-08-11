@@ -439,16 +439,6 @@ pub fn times_base_point(times: U64x4) -> JacobiPoint {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::random;
-
-    fn rand_u64x4() -> U64x4 {
-        U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        )
-    }
 
     #[test]
     fn test_add_jacobi_affine() {
@@ -479,7 +469,7 @@ mod tests {
 
     #[test]
     fn test_base_times() {
-        let r = rand_u64x4();
+        let r = U64x4::random();
         let s1 = times_point(ECC_G, r);
         let s2 = times_base_point(r);
         assert!(jacobi_point_equal_to(s1, s2));
