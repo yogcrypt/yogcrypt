@@ -1,5 +1,6 @@
 // Most variable's name are same as those in the Document written by the Encryption Administration
 use std::num::Wrapping;
+use basic::helper::*;
 
 static IV: [u32; 8] = [
     0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e,
@@ -113,30 +114,8 @@ fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
 }
 
 pub fn sm3_enc(msg: &[u8]) -> [u32; 8] {
-    // bit length = msg.len() * 8
-    let bit_len = msg.len() << 3;
-    // length for [u32] is ceil(msg.len() / 4)
-    let mut msg2: Vec<u32> = vec![];
-    for index in 0..((msg.len() + 3) / 4) {
-        #[inline(always)]
-        fn group_as_u32(msg: &[u8], i: usize) -> u32 {
-            #[inline(always)]
-            fn unpack(o: Option<&u8>) -> u32 {
-                match o {
-                    None => 0u32,
-                    Some(&a) => a as u32,
-                }
-            }
-            let start = i * 4;
-            (unpack(msg.get(start)) << 24)
-                + (unpack(msg.get(start + 1)) << 16)
-                + (unpack(msg.get(start + 2)) << 8)
-                + unpack(msg.get(start + 3))
-        }
-        msg2.push(group_as_u32(msg, index));
-    }
-
-    sm3_enc_inner(&msg2[..], bit_len)
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm3_enc_inner(&msg[..], bit_len)
 }
 
 pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> [u32; 8] {

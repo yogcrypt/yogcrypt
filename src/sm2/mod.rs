@@ -2,6 +2,7 @@ use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
+use basic::helper::*;
 use rand::random;
 use sm3::*;
 
@@ -77,7 +78,12 @@ fn get_z(q: Point) -> [u32; 8] {
     sm3_enc_inner(&s[0..52], 52 * 32)
 }
 
-pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x4) {
+pub fn sm2_gen_sign(msg: &[u8], d: U64x4, q: Point) -> (U64x4, U64x4) {
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm2_gen_sign_inner(&msg[..], d, q, bit_len)
+}
+
+pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x4) {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
     assert!(is_on_curve(q), "Public key not on curve!");
@@ -147,7 +153,12 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     (r, s)
 }
 
-pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bool {
+pub fn sm2_ver_sign(msg: &[u8], q: Point, r:U64x4, s:U64x4) -> bool {
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm2_ver_sign_inner(&msg[..], q, bit_len, r, s)
+}
+
+pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bool {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
     assert!(is_on_curve(q), "public key not on curve!");
@@ -203,13 +214,13 @@ mod tests {
         for _ in 0..10000 {
             let d_a = rand_u64x4();
 
-            let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+            let msg = [0x01,0x23,0x45,0x67, 0x89,0xAB,0xCD,0xEF, 0xFE,0xDC,0xBA,0x98, 0x76,0x54,0x32,0x10];
 
             let q = get_pub_key(d_a);
 
-            let mut m = sm2_gen_sign(&msg, d_a, q, 4);
+            let mut m = sm2_gen_sign(&msg, d_a, q);
 
-            let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
+            let t = sm2_ver_sign(&msg, q,m.0, m.1);
             assert!(t);
         }
     }
