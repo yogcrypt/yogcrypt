@@ -4,17 +4,7 @@ extern crate criterion;
 extern crate yogcrypt;
 
 use criterion::Criterion;
-use rand::random;
 use yogcrypt::basic::cell::u64x4::*;
-
-fn rand_u64x4() -> U64x4 {
-    U64x4::new(
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-    )
-}
 
 mod sm2_benches {
     use super::*;
@@ -24,7 +14,7 @@ mod sm2_benches {
         c.bench_function("sm2::gen_sign", move |b| {
             b.iter_with_setup(
                 || {
-                    let d_a = rand_u64x4();
+                    let d_a = U64x4::random();
 
                     let msg = b"Hello World!";
                     let q = get_pub_key(d_a);
@@ -39,7 +29,7 @@ mod sm2_benches {
         c.bench_function("sm2::ver_sign", move |b| {
             b.iter_with_setup(
                 || {
-                    let d_a = rand_u64x4();
+                    let d_a = U64x4::random();
 
                     let msg = b"Hello World!";
 
@@ -118,7 +108,7 @@ mod ecc_group_benches {
     fn bench_times(c: &mut Criterion) {
         c.bench_function("ecc_group::times_point", move |b| {
             b.iter_with_setup(
-                || rand_u64x4(),
+                || U64x4::random(),
                 |r| {
                     times_point(ECC_G, r);
                 },
@@ -129,7 +119,7 @@ mod ecc_group_benches {
     fn bench_times_base(c: &mut Criterion) {
         c.bench_function("ecc_group::times_base_point", move |b| {
             b.iter_with_setup(
-                || rand_u64x4(),
+                || U64x4::random(),
                 |r| {
                     times_base_point(r);
                 },
@@ -147,25 +137,19 @@ mod field_p_benches {
     use super::*;
     use yogcrypt::basic::field::field_p::*;
 
-    fn rand_elem() -> FieldElement {
-        FieldElement::from_u64([
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        ])
-    }
-
     fn bench_mul(c: &mut Criterion) {
         c.bench_function("field_p::mul", move |b| {
-            b.iter_with_setup(|| (rand_elem(), rand_elem()), |(a, b)| a * b)
+            b.iter_with_setup(
+                || (FieldElement::random(), FieldElement::random()),
+                |(a, b)| a * b,
+            )
         });
     }
 
     fn bench_inversion(c: &mut Criterion) {
         c.bench_function("field_p::inv", move |b| {
             b.iter_with_setup(
-                || rand_elem(),
+                || FieldElement::random(),
                 |a| {
                     get_mul_inv(a);
                 },
@@ -175,7 +159,10 @@ mod field_p_benches {
 
     fn bench_add(c: &mut Criterion) {
         c.bench_function("field_p:add", move |b| {
-            b.iter_with_setup(|| (rand_elem(), rand_elem()), |(a, b)| a + b)
+            b.iter_with_setup(
+                || (FieldElement::random(), FieldElement::random()),
+                |(a, b)| a + b,
+            )
         });
     }
 

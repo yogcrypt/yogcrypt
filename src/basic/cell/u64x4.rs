@@ -7,6 +7,8 @@ use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign};
 
 use basic::cell::u64x8::*;
 
+use rand::random;
+
 #[derive(Copy, Clone, Debug)]
 pub struct U64x4 {
     pub value: [u64; 4],
@@ -27,6 +29,17 @@ impl U64x4 {
     pub fn new(x0: u64, x1: u64, x2: u64, x3: u64) -> Self {
         Self {
             value: [x0, x1, x2, x3],
+        }
+    }
+
+    pub fn random() -> Self {
+        Self {
+            value: [
+                random::<u64>(),
+                random::<u64>(),
+                random::<u64>(),
+                random::<u64>(),
+            ],
         }
     }
 

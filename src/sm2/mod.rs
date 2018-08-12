@@ -27,7 +27,6 @@ use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
 use basic::helper::bytes_to_u32_blocks;
-use rand::random;
 use sm3::*;
 
 pub type PubKey = Point;
@@ -147,19 +146,9 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
     );
 
     // ephemeral key
-    let mut k = U64x4::new(
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-        random::<u64>(),
-    );
+    let mut k = U64x4::random();
     while greater_equal(k, MODULO_P) {
-        k = U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        );
+        k = U64x4::random();
     }
 
     let mut p_jacobi = times_base_point(k);
@@ -176,19 +165,9 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
     );
 
     while equal_to_zero(r) || equal_to_zero(add_mod_n(r, k)) || equal_to_zero(s) {
-        k = U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        );
+        k = U64x4::random();
         while greater_equal(k, MODULO_P) {
-            k = U64x4::new(
-                random::<u64>(),
-                random::<u64>(),
-                random::<u64>(),
-                random::<u64>(),
-            );
+            k = U64x4::random();
         }
         p_jacobi = times_base_point(k);
         p = jacobi_to_affine(p_jacobi);
@@ -251,19 +230,10 @@ pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signa
 mod tests {
     use super::*;
 
-    fn rand_u64x4() -> U64x4 {
-        U64x4::new(
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        )
-    }
-
     #[test]
     fn test() {
         for _ in 0..10000 {
-            let d_a = rand_u64x4();
+            let d_a = U64x4::random();
 
             let msg = [
                 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54,

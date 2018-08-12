@@ -1,4 +1,5 @@
 use basic::cell::u64x4::*;
+use rand::random;
 use std::fmt;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -53,14 +54,26 @@ impl FieldElement {
     pub fn new(num: U64x4) -> Self {
         to_mod_p(num)
     }
+
     pub fn from_u64(value: [u64; 4]) -> Self {
         to_mod_p(U64x4 { value })
     }
+
     pub fn from_u32(value: [u32; 8]) -> Self {
         to_mod_p(U64x4::from_u32(value))
     }
+
     pub fn value(self, i: usize) -> u64 {
         self.num.value[i]
+    }
+
+    pub fn random() -> Self {
+        FieldElement::from_u64([
+            random::<u64>(),
+            random::<u64>(),
+            random::<u64>(),
+            random::<u64>(),
+        ])
     }
 }
 
@@ -276,16 +289,6 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::random;
-
-    fn rand_elem() -> FieldElement {
-        FieldElement::from_u64([
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-            random::<u64>(),
-        ])
-    }
 
     #[test]
     fn test_mul() {
@@ -301,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_inversion() {
-        let a = rand_elem();
+        let a = FieldElement::random();
         let b = get_mul_inv(a);
         assert!(equal_to((a * b).num, U64x4::new(1, 0, 0, 0)));
     }
