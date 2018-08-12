@@ -274,7 +274,7 @@ mod tests {
 
             let mut m = sm2_gen_sign(&msg, d_a, q);
 
-            let t = sm2_ver_sign(&msg, q, m);
+            let t = sm2_ver_sign(&msg, q, &m);
             assert!(t);
         }
     }
