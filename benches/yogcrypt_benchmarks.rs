@@ -26,11 +26,11 @@ mod sm2_benches {
                 || {
                     let d_a = rand_u64x4();
 
-                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+                    let msg = b"Hello World!";
                     let q = get_pub_key(d_a);
                     (d_a, msg, q)
                 },
-                |(d_a, msg, q)| sm2_gen_sign(&msg, d_a, q),
+                |(d_a, msg, q)| sm2_gen_sign(msg, d_a, q),
             )
         });
     }
@@ -41,14 +41,14 @@ mod sm2_benches {
                 || {
                     let d_a = rand_u64x4();
 
-                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+                    let msg = b"Hello World!";
 
                     let q = get_pub_key(d_a);
 
-                    (msg, q, sm2_gen_sign(&msg, d_a, q))
+                    (msg, q, sm2_gen_sign(msg, d_a, q))
                 },
                 |(msg, q, signature)| {
-                    let t = sm2_ver_sign(&msg, q,  &signature);
+                    let t = sm2_ver_sign(msg, q,  &signature);
                     assert!(t);
                 },
             )
@@ -83,28 +83,28 @@ mod sm4_benches {
     use yogcrypt::sm4::*;
 
     fn bench_enc(c: &mut Criterion) {
-        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let m = b"ajfkdljfldsjkfsd";
+        let p_txt = b"1234567890abcdef";
 
         c.bench_function("sm4::enc", move |b| {
             b.iter(|| {
-                sm4_enc(&m, &p_txt);
+                sm4_enc(m, p_txt);
             });
         });
     }
 
     fn bench_dec(c: &mut Criterion) {
-        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let m= b"ajfkdljfldsjkfsd";
+        let p_txt = b"1234567890abcdef";
 
         c.bench_function("sm4::dec", move |b| {
             b.iter_with_setup(
                 || {
-                    sm4_enc(&m, &p_txt)
+                    sm4_enc(m, p_txt)
                 },
                 |c_txt| {
-                    let p_txt2 = sm4_dec(&m, &c_txt);
-                    assert_eq!(p_txt, p_txt2);
+                    let p_txt2 = sm4_dec(m, &c_txt);
+                    assert_eq!(p_txt, &p_txt2);
                 },
             )
         });
