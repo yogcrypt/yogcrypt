@@ -24,7 +24,7 @@ pub fn bytes_to_u32_blocks(msg: &[u8]) -> (Vec<u32>, usize) {
             fn unpack(o: Option<&u8>) -> u32 {
                 match o {
                     None => 0u32,
-                    Some(&a) => a as u32,
+                    Some(&a) => u32::from(a),
                 }
             }
             let start = i * 4;
