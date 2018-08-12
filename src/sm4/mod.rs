@@ -249,14 +249,26 @@ macro_rules! sm4_rnds {
 
 fn bytes_to_four_u32(b: &[u8; 16]) -> [u32; 4] {
     [
-        (u32::from(b[0]) << 24) + (u32::from(b[1]) << 16) + (u32::from(b[2]) << 8) + u32::from(b[3]),
-        (u32::from(b[4]) << 24) + (u32::from(b[5]) << 16) + (u32::from(b[6]) << 8) + u32::from(b[7]),
-        (u32::from(b[8]) << 24) + (u32::from(b[9]) << 16) + (u32::from(b[10]) << 8) + u32::from(b[11]),
-        (u32::from(b[12]) << 24) + (u32::from(b[13]) << 16) + (u32::from(b[14]) << 8) + u32::from(b[15]),
+        (u32::from(b[0]) << 24)
+            + (u32::from(b[1]) << 16)
+            + (u32::from(b[2]) << 8)
+            + u32::from(b[3]),
+        (u32::from(b[4]) << 24)
+            + (u32::from(b[5]) << 16)
+            + (u32::from(b[6]) << 8)
+            + u32::from(b[7]),
+        (u32::from(b[8]) << 24)
+            + (u32::from(b[9]) << 16)
+            + (u32::from(b[10]) << 8)
+            + u32::from(b[11]),
+        (u32::from(b[12]) << 24)
+            + (u32::from(b[13]) << 16)
+            + (u32::from(b[14]) << 8)
+            + u32::from(b[15]),
     ]
 }
 
-fn four_u32_to_bytes(l: &[u32; 4]) -> [u8;16] {
+fn four_u32_to_bytes(l: &[u32; 4]) -> [u8; 16] {
     [
         (l[0] >> 24) as u8,
         (l[0] >> 16) as u8,

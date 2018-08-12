@@ -48,7 +48,7 @@ mod sm2_benches {
                     (msg, q, sm2_gen_sign(msg, d_a, q))
                 },
                 |(msg, q, signature)| {
-                    let t = sm2_ver_sign(msg, q,  &signature);
+                    let t = sm2_ver_sign(msg, q, &signature);
                     assert!(t);
                 },
             )
@@ -69,7 +69,7 @@ mod sm3_benches {
     fn bench(c: &mut Criterion) {
         c.bench_function("sm3::hash", move |b| {
             b.iter(|| {
-                let msg= b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
+                let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
 
                 sm3_enc(msg)
             });
@@ -94,14 +94,12 @@ mod sm4_benches {
     }
 
     fn bench_dec(c: &mut Criterion) {
-        let m= b"ajfkdljfldsjkfsd";
+        let m = b"ajfkdljfldsjkfsd";
         let p_txt = b"1234567890abcdef";
 
         c.bench_function("sm4::dec", move |b| {
             b.iter_with_setup(
-                || {
-                    sm4_enc(m, p_txt)
-                },
+                || sm4_enc(m, p_txt),
                 |c_txt| {
                     let p_txt2 = sm4_dec(m, &c_txt);
                     assert_eq!(p_txt, &p_txt2);
