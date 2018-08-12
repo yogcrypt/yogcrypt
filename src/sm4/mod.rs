@@ -25,10 +25,10 @@ use basic::util::{bytes_to_four_u32, four_u32_to_bytes};
 
 pub const BLOCK_SIZE: usize = 16;
 pub const KEY_SIZE: usize = 16;
-pub const RND_KEY_SIZE: u32 = 32 * 4;
+pub const RND_KEY_SIZE: usize = 32;
 
-pub type Key = [u8; 16];
-pub type Block = [u8; 16];
+pub type Key = [u8; KEY_SIZE];
+pub type Block = [u8; BLOCK_SIZE];
 
 const SBOX: [u8; 256] = [
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
@@ -275,7 +275,7 @@ pub fn sm4_enc(sk: &Key, p_txt: &Block) -> Block {
 }
 
 /// Core function for sm4 encryption
-pub fn sm4_enc_inner(r_k: &[u32; 32], p_txt: &[u32; 4]) -> [u32; 4] {
+pub fn sm4_enc_inner(r_k: &[u32; RND_KEY_SIZE], p_txt: &[u32; 4]) -> [u32; 4] {
     let mut b0: u32 = p_txt[0];
     let mut b1: u32 = p_txt[1];
     let mut b2: u32 = p_txt[2];
@@ -308,7 +308,7 @@ pub fn sm4_dec(sk: &Key, c_txt: &Block) -> Block {
 }
 
 /// Core function of sm4 decryption
-pub fn sm4_dec_inner(r_k: &[u32; 32], c_txt: &[u32; 4]) -> [u32; 4] {
+pub fn sm4_dec_inner(r_k: &[u32; RND_KEY_SIZE], c_txt: &[u32; 4]) -> [u32; 4] {
     let mut b0: u32 = c_txt[0];
     let mut b1: u32 = c_txt[1];
     let mut b2: u32 = c_txt[2];
