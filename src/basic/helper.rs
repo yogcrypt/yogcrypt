@@ -1,6 +1,6 @@
 //! A helper module for commonly used internal functions
 
-/// Convert bytes into `[u32]` blocks for internal implementations.
+/// Convert bytes into `[u32]` blocks for internal representations.
 ///
 /// # Example
 /// ```
