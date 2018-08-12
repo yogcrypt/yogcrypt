@@ -1,7 +1,31 @@
-// Most variable's name are same as those in the Document written by the Encryption Administration
-use std::num::Wrapping;
-use basic::helper::*;
+//! An implementation of the SM3 Cryptographic hash standard.
+//!
+//! ## Usage
+//! ```
+//! extern crate yogcrypt;
+//! use yogcrypt::sm3::{sm3_enc};
+//!
+//! let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
+//!
+//! let hash = sm3_enc(msg);
+//! assert_eq!(
+//!     hash,
+//!     [
+//!         0xdebe9ff9, 0x2275b8a1, 0x38604889, 0xc18e5a4d, 0x6fdb70e5, 0x387e5765, 0x293dcba3,
+//!         0x9c0c5732
+//!     ]
+//! );
+//! ```
+//!
+//! ## Reference
+//! Most variable's name are same as those in the Document written by the Encryption Administration.
+//!
+//! http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf
 
+use basic::helper::*;
+use std::num::Wrapping;
+
+pub type Hash = [u32; 8];
 static IV: [u32; 8] = [
     0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e,
 ];
@@ -113,12 +137,14 @@ fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
     vs
 }
 
-pub fn sm3_enc(msg: &[u8]) -> [u32; 8] {
+/// Compute the hash of the given message
+pub fn sm3_enc(msg: &[u8]) -> Hash {
     let (msg, bit_len) = bytes_to_u32_blocks(msg);
     sm3_enc_inner(&msg[..], bit_len)
 }
 
-pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> [u32; 8] {
+/// Core function for sm3 with specified input length
+pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> Hash {
     let mut msg_len = prim_len;
     msg_len += 1; // Add "1" to the end of msg
 

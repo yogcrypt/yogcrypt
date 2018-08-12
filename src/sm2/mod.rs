@@ -38,7 +38,7 @@ pub struct Signature {
 /// Randomly sample secret key uniformly from [0,..n), where n is the order of the base point
 pub fn get_sec_key() -> SecKey {
     // TODO replace with random
-    U64x4::new(0,0,0,0)
+    U64x4::new(0, 0, 0, 0)
 }
 
 /// Compute public key from secret key
@@ -125,7 +125,7 @@ pub fn sm2_gen_sign(msg: &[u8], d: SecKey, q: PubKey) -> Signature {
     sm2_gen_sign_inner(&msg[..], d, q, bit_len)
 }
 
-/// Helper function with specified input length.
+/// Core function for generation with specified input length
 pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) -> Signature {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
@@ -193,19 +193,19 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
         r = add_mod_n(e, p.x.num);
     }
 
-    Signature {r, s}
+    Signature { r, s }
 }
 
 /// Verify a signature on a given message using public key
 ///
 /// **Note**: The underlying hash function is `sm3`.
-pub fn sm2_ver_sign(msg: &[u8], q: PubKey, sig: Signature) -> bool {
+pub fn sm2_ver_sign(msg: &[u8], q: PubKey, sig: &Signature) -> bool {
     let (msg, bit_len) = bytes_to_u32_blocks(msg);
     sm2_ver_sign_inner(&msg[..], q, bit_len, sig)
 }
 
 /// Core function for verification with specified input length
-pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: Signature) -> bool {
+pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signature) -> bool {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
     assert!(is_on_curve(q), "public key not on curve!");
@@ -263,13 +263,16 @@ mod tests {
         for _ in 0..10000 {
             let d_a = rand_u64x4();
 
-            let msg = [0x01,0x23,0x45,0x67, 0x89,0xAB,0xCD,0xEF, 0xFE,0xDC,0xBA,0x98, 0x76,0x54,0x32,0x10];
+            let msg = [
+                0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54,
+                0x32, 0x10,
+            ];
 
             let q = get_pub_key(d_a);
 
             let mut m = sm2_gen_sign(&msg, d_a, q);
 
-            let t = sm2_ver_sign(&msg, q,m);
+            let t = sm2_ver_sign(&msg, q, m);
             assert!(t);
         }
     }
