@@ -1,6 +1,6 @@
 //! An implementation of the SM2 Signature Standard.
 //!
-//! # Usage
+//! ## Usage
 //! ```
 //! extern crate yogcrypt;
 //! use yogcrypt::sm2::{get_sec_key, get_pub_key, sm2_gen_sign, sm2_ver_sign};
@@ -18,7 +18,7 @@
 //! assert!(t);
 //! ```
 //!
-//! # Reference
+//! ## Reference
 //! http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf
 use basic::cell::u64x4::*;
 use basic::field::field_n::*;
@@ -28,10 +28,11 @@ use basic::helper::*;
 use rand::random;
 use sm3::*;
 
-type PubKey = Point;
-type SecKey = U64x4;
+pub type PubKey = Point;
+pub type SecKey = U64x4;
 pub struct Signature {
-    pub r: U64x4, s:U64x4,
+    pub r: U64x4,
+    pub s: U64x4,
 }
 
 /// Randomly sample secret key uniformly from [0,..n), where n is the order of the base point
@@ -41,6 +42,8 @@ pub fn get_sec_key() -> SecKey {
 }
 
 /// Compute public key from secret key
+///
+/// By definition public key is computed by pk = [sk] G, where G is the base point.
 pub fn get_pub_key(d: SecKey) -> PubKey {
     let rst_jacobi = times_base_point(d);
     jacobi_to_affine(rst_jacobi)
@@ -116,7 +119,7 @@ fn get_z(q: PubKey) -> [u32; 8] {
 
 /// Generate a valid signature for a message using a pair of keys.
 ///
-/// *Note* The underlying hash function is `sm3`.
+/// **Note**: The underlying hash function is `sm3`.
 pub fn sm2_gen_sign(msg: &[u8], d: SecKey, q: PubKey) -> Signature {
     let (msg, bit_len) = bytes_to_u32_blocks(msg);
     sm2_gen_sign_inner(&msg[..], d, q, bit_len)
@@ -195,7 +198,7 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
 
 /// Verify a signature on a given message using public key
 ///
-/// *Note* The underlying hash function is `sm3`.
+/// **Note**: The underlying hash function is `sm3`.
 pub fn sm2_ver_sign(msg: &[u8], q: PubKey, sig: Signature) -> bool {
     let (msg, bit_len) = bytes_to_u32_blocks(msg);
     sm2_ver_sign_inner(&msg[..], q, bit_len, sig)
