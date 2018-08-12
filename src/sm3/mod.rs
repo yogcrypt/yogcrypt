@@ -1,4 +1,4 @@
-//! An implementation of the SM3 Cryptographic hash standard.
+//! An implementation of the SM3 cryptographic hash standard.
 //!
 //! ## Usage
 //! ```
@@ -18,14 +18,14 @@
 //! ```
 //!
 //! ## Reference
-//! Most variable's name are same as those in the Document written by the Encryption Administration.
+//! Most variable's name in the source code are in accordance with the document.
 //!
-//! http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf
+//! [OSCCA: SM3 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf)
 
 use basic::helper::*;
 use std::num::Wrapping;
 
-pub type Hash = [u32; 8];
+pub type HashValue = [u32; 8];
 static IV: [u32; 8] = [
     0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e,
 ];
@@ -138,13 +138,13 @@ fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
 }
 
 /// Compute the hash of the given message
-pub fn sm3_enc(msg: &[u8]) -> Hash {
+pub fn sm3_enc(msg: &[u8]) -> HashValue {
     let (msg, bit_len) = bytes_to_u32_blocks(msg);
     sm3_enc_inner(&msg[..], bit_len)
 }
 
 /// Core function for sm3 with specified input length
-pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> Hash {
+pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> HashValue {
     let mut msg_len = prim_len;
     msg_len += 1; // Add "1" to the end of msg
 

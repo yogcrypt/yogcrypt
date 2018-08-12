@@ -1,25 +1,27 @@
-//! An implementation of the SM2 Signature Standard.
+//! An implementation of the SM2 signature standard.
 //!
 //! ## Usage
 //! ```
 //! extern crate yogcrypt;
 //! use yogcrypt::sm2::{get_sec_key, get_pub_key, sm2_gen_sign, sm2_ver_sign};
 //!
-//! let d_a = get_sec_key();
+//! let sk = get_sec_key();
 //! let msg = b"Hello World!";
 //!
-//! let q = get_pub_key(d_a);
+//! let pk = get_pub_key(sk);
 //!
-//! let mut m = sm2_gen_sign(msg, d_a, q);
+//! let mut tag = sm2_gen_sign(msg, sk, pk);
 //!
-//! let t = sm2_ver_sign(msg, q,m);
+//! let t = sm2_ver_sign(msg, pk, &tag);
 //!
 //! // Signature is accepted
 //! assert!(t);
 //! ```
 //!
 //! ## Reference
-//! http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf
+//! Most variable's name in the source code are in accordance with the document.
+//!
+//! [OSCCA: SM2 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf)
 use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
