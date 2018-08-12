@@ -26,7 +26,7 @@ use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
-use basic::helper::*;
+use basic::helper::bytes_to_u32_blocks;
 use rand::random;
 use sm3::*;
 
