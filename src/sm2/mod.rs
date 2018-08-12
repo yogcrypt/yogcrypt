@@ -1,15 +1,60 @@
+//! An implementation of the SM2 signature standard.
+//!
+//! ## Usage
+//! ```
+//! extern crate yogcrypt;
+//! use yogcrypt::sm2::{get_sec_key, get_pub_key, sm2_gen_sign, sm2_ver_sign};
+//!
+//! let sk = get_sec_key();
+//! let msg = b"Hello World!";
+//!
+//! let pk = get_pub_key(sk);
+//!
+//! let mut tag = sm2_gen_sign(msg, sk, pk);
+//!
+//! let t = sm2_ver_sign(msg, pk, &tag);
+//!
+//! // Signature is accepted
+//! assert!(t);
+//! ```
+//!
+//! ## Reference
+//! Most variable's name in the source code are in accordance with the document.
+//!
+//! [OSCCA: SM2 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf)
 use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
+use basic::util::bytes_to_u32_blocks;
 use sm3::*;
 
-pub fn get_pub_key(d: U64x4) -> Point {
+pub type PubKey = Point;
+pub type SecKey = U64x4;
+pub struct Signature {
+    pub r: U64x4,
+    pub s: U64x4,
+}
+
+/// Randomly sample secret key uniformly from [0,..n), where n is the order of the base point
+pub fn get_sec_key() -> SecKey {
+    let mut k = U64x4::random();
+    while greater_equal(k, MODULO_N) {
+        k = U64x4::random()
+    }
+    k
+}
+
+/// Compute public key from secret key
+///
+/// By definition public key is computed by pk = [sk] G, where G is the base point.
+pub fn get_pub_key(d: SecKey) -> PubKey {
     let rst_jacobi = times_base_point(d);
     jacobi_to_affine(rst_jacobi)
 }
 
-fn get_z(q: Point) -> [u32; 8] {
+/// Compute context `Z` as specified in standard document
+fn get_z(q: PubKey) -> [u32; 8] {
     let _len: usize = 2 + 14 + 6 * 32;
     let mut s: [u32; 52] = [0; 52];
 
@@ -73,10 +118,19 @@ fn get_z(q: Point) -> [u32; 8] {
     s[51] = q.y.value(0) as u32;
 
     //Z = sm3Enc(&s[0..52], 52 * 32)
-    sm3_enc(&s[0..52], 52 * 32)
+    sm3_enc_inner(&s[0..52], 52 * 32)
 }
 
-pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x4) {
+/// Generate a valid signature for a message using a pair of keys.
+///
+/// **Note**: The underlying hash function is `sm3`.
+pub fn sm2_gen_sign(msg: &[u8], d: SecKey, q: PubKey) -> Signature {
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm2_gen_sign_inner(&msg[..], d, q, bit_len)
+}
+
+/// Core function for generation with specified input length
+pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) -> Signature {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
     assert!(is_on_curve(q), "Public key not on curve!");
@@ -86,7 +140,7 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
     let m = [msg, &z].concat();
 
     // compute the hash value
-    let e = sm3_enc(&m, (len + 8) * 32);
+    let e = sm3_enc_inner(&m, (len + 8) * 32);
     let mut e = U64x4::new(
         u64::from(e[7]) | (u64::from(e[6]) << 32),
         u64::from(e[5]) | (u64::from(e[4]) << 32),
@@ -123,13 +177,24 @@ pub fn sm2_gen_sign(msg: &[u32], d: U64x4, q: Point, len: usize) -> (U64x4, U64x
         r = add_mod_n(e, p.x.num);
     }
 
-    (r, s)
+    Signature { r, s }
 }
 
-pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bool {
+/// Verify a signature on a given message using public key
+///
+/// **Note**: The underlying hash function is `sm3`.
+pub fn sm2_ver_sign(msg: &[u8], q: PubKey, sig: &Signature) -> bool {
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm2_ver_sign_inner(&msg[..], q, bit_len, sig)
+}
+
+/// Core function for verification with specified input length
+pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signature) -> bool {
     // verify that Q is indeed on the curve
     // to prevent false curve attack
     assert!(is_on_curve(q), "public key not on curve!");
+    let r = sig.r;
+    let s = sig.s;
 
     if greater_equal(r, MODULO_N) || equal_to_zero(r) {
         return false;
@@ -140,7 +205,7 @@ pub fn sm2_ver_sign(msg: &[u32], q: Point, len: usize, r: U64x4, s: U64x4) -> bo
     let z_a = get_z(q);
     let m = [msg, &z_a].concat();
 
-    let e = sm3_enc(&m, (len + 8) * 32);
+    let e = sm3_enc_inner(&m, (len + 8) * 32);
     let e = U64x4::new(
         u64::from(e[7]) | (u64::from(e[6]) << 32),
         u64::from(e[5]) | (u64::from(e[4]) << 32),
@@ -173,13 +238,16 @@ mod tests {
         for _ in 0..10000 {
             let d_a = U64x4::random();
 
-            let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+            let msg = [
+                0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54,
+                0x32, 0x10,
+            ];
 
             let q = get_pub_key(d_a);
 
-            let mut m = sm2_gen_sign(&msg, d_a, q, 4);
+            let mut m = sm2_gen_sign(&msg, d_a, q);
 
-            let t = sm2_ver_sign(&msg, q, 4, m.0, m.1);
+            let t = sm2_ver_sign(&msg, q, &m);
             assert!(t);
         }
     }

@@ -1,6 +1,34 @@
-//const SM4_BLOCK_SIZE: usize = 16;
-//const SM4_KEY_SIZE: usize = 16;
-//const SM4_RND_KEY_SIZE: u32 = 32 * 4;
+//! An implementation of the SM4 block cipher standard.
+//!
+//! ## Usage
+//! ```
+//! extern crate yogcrypt;
+//! use yogcrypt::sm4::{sm4_enc, sm4_dec};
+//!
+//! let m = b"ajfkdljfldsjkfsd";
+//! let p_txt = b"1234567890abcdef";
+//!
+//! let c_txt = sm4_enc(m, p_txt);
+//! let p_txt2 = sm4_dec(m, &c_txt);
+//! assert_eq!(p_txt, &p_txt2);
+//! ```
+//!
+//! ## Note
+//! When implementing block cipher modes, one is highly encouraged to use `[u32]` representation to
+//! avoid frequent conversions. Also, the round keys can be computed only once at the beginning.
+//!
+//! ## Reference
+//! Most variable's name are same as those in the Document written by the Encryption Administration.
+//!
+//! [DACAS: sm4](http://dacas.cn/sharedimages/ARTICLES/SMAlgorithms/SM4.pdf)
+use basic::util::{bytes_to_four_u32, four_u32_to_bytes};
+
+pub const BLOCK_SIZE: usize = 16;
+pub const KEY_SIZE: usize = 16;
+pub const RND_KEY_SIZE: u32 = 32 * 4;
+
+pub type Key = [u8; 16];
+pub type Block = [u8; 16];
 
 const SBOX: [u8; 256] = [
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
@@ -221,6 +249,7 @@ macro_rules! sm4_rnds {
     };
 }
 
+/// Compute round keys from a given key.
 pub fn get_sm4_r_k(m_k: &[u32; 4]) -> [u32; 32] {
     let mut r_k = [0u32; 32];
 
@@ -238,7 +267,15 @@ pub fn get_sm4_r_k(m_k: &[u32; 4]) -> [u32; 32] {
     r_k
 }
 
-pub fn sm4_enc(r_k: &[u32], p_txt: &[u32; 4]) -> [u32; 4] {
+/// Encrypt `p_txt` under `sk`
+pub fn sm4_enc(sk: &Key, p_txt: &Block) -> Block {
+    let r_k = get_sm4_r_k(&bytes_to_four_u32(sk));
+    let p_txt = bytes_to_four_u32(p_txt);
+    four_u32_to_bytes(&sm4_enc_inner(&r_k, &p_txt))
+}
+
+/// Core function for sm4 encryption
+pub fn sm4_enc_inner(r_k: &[u32; 32], p_txt: &[u32; 4]) -> [u32; 4] {
     let mut b0: u32 = p_txt[0];
     let mut b1: u32 = p_txt[1];
     let mut b2: u32 = p_txt[2];
@@ -263,7 +300,15 @@ pub fn sm4_enc(r_k: &[u32], p_txt: &[u32; 4]) -> [u32; 4] {
     c_txt
 }
 
-pub fn sm4_dec(r_k: &[u32], c_txt: &[u32; 4]) -> [u32; 4] {
+/// Decrypt `c_txt` using `sk`
+pub fn sm4_dec(sk: &Key, c_txt: &Block) -> Block {
+    let r_k = get_sm4_r_k(&bytes_to_four_u32(sk));
+    let c_txt = bytes_to_four_u32(c_txt);
+    four_u32_to_bytes(&sm4_dec_inner(&r_k, &c_txt))
+}
+
+/// Core function of sm4 decryption
+pub fn sm4_dec_inner(r_k: &[u32; 32], c_txt: &[u32; 4]) -> [u32; 4] {
     let mut b0: u32 = c_txt[0];
     let mut b1: u32 = c_txt[1];
     let mut b2: u32 = c_txt[2];
@@ -294,22 +339,11 @@ mod tests {
 
     #[test]
     fn test() {
-        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-        let r = get_sm4_r_k(&m);
-        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let m = b"ajfkdljfldsjkfsd";
+        let p_txt = b"1234567890abcdef";
 
-        let c_txt = sm4_enc(&r, &p_txt);
-
-        println!(
-            "{:08X} {:08X} {:08X} {:08X}",
-            c_txt[0], c_txt[1], c_txt[2], c_txt[3]
-        );
-
-        let p_txt2 = sm4_dec(&r, &c_txt);
-        println!(
-            "{:08X} {:08X} {:08X} {:08X}",
-            p_txt2[0], p_txt2[1], p_txt2[2], p_txt2[3]
-        );
-        assert_eq!(p_txt, p_txt2);
+        let c_txt = sm4_enc(m, p_txt);
+        let p_txt2 = sm4_dec(m, &c_txt);
+        assert_eq!(p_txt, &p_txt2);
     }
 }

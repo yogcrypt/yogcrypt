@@ -16,11 +16,11 @@ mod sm2_benches {
                 || {
                     let d_a = U64x4::random();
 
-                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+                    let msg = b"Hello World!";
                     let q = get_pub_key(d_a);
                     (d_a, msg, q)
                 },
-                |(d_a, msg, q)| sm2_gen_sign(&msg, d_a, q, 4),
+                |(d_a, msg, q)| sm2_gen_sign(msg, d_a, q),
             )
         });
     }
@@ -31,14 +31,14 @@ mod sm2_benches {
                 || {
                     let d_a = U64x4::random();
 
-                    let msg = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+                    let msg = b"Hello World!";
 
                     let q = get_pub_key(d_a);
 
-                    (msg, q, sm2_gen_sign(&msg, d_a, q, 4))
+                    (msg, q, sm2_gen_sign(msg, d_a, q))
                 },
                 |(msg, q, signature)| {
-                    let t = sm2_ver_sign(&msg, q, 4, signature.0, signature.1);
+                    let t = sm2_ver_sign(msg, q, &signature);
                     assert!(t);
                 },
             )
@@ -59,13 +59,9 @@ mod sm3_benches {
     fn bench(c: &mut Criterion) {
         c.bench_function("sm3::hash", move |b| {
             b.iter(|| {
-                let msg: [u32; 16] = [
-                    0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                    0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                    0x61626364, 0x61626364, 0x61626364, 0x61626364,
-                ];
+                let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
 
-                sm3_enc(&msg, 512)
+                sm3_enc(msg)
             });
         });
     }
@@ -77,30 +73,26 @@ mod sm4_benches {
     use yogcrypt::sm4::*;
 
     fn bench_enc(c: &mut Criterion) {
-        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let m = b"ajfkdljfldsjkfsd";
+        let p_txt = b"1234567890abcdef";
 
         c.bench_function("sm4::enc", move |b| {
             b.iter(|| {
-                let r = get_sm4_r_k(&m);
-                sm4_enc(&r, &p_txt);
+                sm4_enc(m, p_txt);
             });
         });
     }
 
     fn bench_dec(c: &mut Criterion) {
-        let m: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
-        let p_txt: [u32; 4] = [0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210];
+        let m = b"ajfkdljfldsjkfsd";
+        let p_txt = b"1234567890abcdef";
 
         c.bench_function("sm4::dec", move |b| {
             b.iter_with_setup(
-                || {
-                    let r = get_sm4_r_k(&m);
-                    (r, sm4_enc(&r, &p_txt))
-                },
-                |(r, c_txt)| {
-                    let p_txt2 = sm4_dec(&r, &c_txt);
-                    assert_eq!(p_txt, p_txt2);
+                || sm4_enc(m, p_txt),
+                |c_txt| {
+                    let p_txt2 = sm4_dec(m, &c_txt);
+                    assert_eq!(p_txt, &p_txt2);
                 },
             )
         });

@@ -1,6 +1,31 @@
-// Most variable's name are same as those in the Document written by the Encryption Administration
+//! An implementation of the SM3 cryptographic hash standard.
+//!
+//! ## Usage
+//! ```
+//! extern crate yogcrypt;
+//! use yogcrypt::sm3::{sm3_enc};
+//!
+//! let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
+//!
+//! let hash = sm3_enc(msg);
+//! assert_eq!(
+//!     hash,
+//!     [
+//!         0xdebe9ff9, 0x2275b8a1, 0x38604889, 0xc18e5a4d, 0x6fdb70e5, 0x387e5765, 0x293dcba3,
+//!         0x9c0c5732
+//!     ]
+//! );
+//! ```
+//!
+//! ## Reference
+//! Most variable's name in the source code are in accordance with the document.
+//!
+//! [OSCCA: SM3 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf)
+
+use basic::util::bytes_to_u32_blocks;
 use std::num::Wrapping;
 
+pub type HashValue = [u32; 8];
 static IV: [u32; 8] = [
     0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e,
 ];
@@ -112,7 +137,14 @@ fn sm3_cf(vi: [u32; 8], bi: [u32; 16]) -> [u32; 8] {
     vs
 }
 
-pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
+/// Compute the hash of the given message
+pub fn sm3_enc(msg: &[u8]) -> HashValue {
+    let (msg, bit_len) = bytes_to_u32_blocks(msg);
+    sm3_enc_inner(&msg[..], bit_len)
+}
+
+/// Core function for sm3 with specified input length
+pub(crate) fn sm3_enc_inner(msg: &[u32], prim_len: usize) -> HashValue {
     let mut msg_len = prim_len;
     msg_len += 1; // Add "1" to the end of msg
 
@@ -163,45 +195,6 @@ pub fn sm3_enc(msg: &[u32], prim_len: usize) -> [u32; 8] {
     v
 }
 
-pub fn sm3_enc_to_u8(msg: &[u32], prim_len: usize) -> [u8; 32] {
-    let l = sm3_enc(msg, prim_len);
-
-    [
-        (l[0] >> 24) as u8,
-        (l[0] >> 16) as u8,
-        (l[0] >> 8) as u8,
-        l[0] as u8,
-        (l[1] >> 24) as u8,
-        (l[1] >> 16) as u8,
-        (l[1] >> 8) as u8,
-        l[1] as u8,
-        (l[2] >> 24) as u8,
-        (l[2] >> 16) as u8,
-        (l[2] >> 8) as u8,
-        l[2] as u8,
-        (l[3] >> 24) as u8,
-        (l[3] >> 16) as u8,
-        (l[3] >> 8) as u8,
-        l[3] as u8,
-        (l[4] >> 24) as u8,
-        (l[4] >> 16) as u8,
-        (l[4] >> 8) as u8,
-        l[4] as u8,
-        (l[5] >> 24) as u8,
-        (l[5] >> 16) as u8,
-        (l[5] >> 8) as u8,
-        l[5] as u8,
-        (l[6] >> 24) as u8,
-        (l[6] >> 16) as u8,
-        (l[6] >> 8) as u8,
-        l[6] as u8,
-        (l[7] >> 24) as u8,
-        (l[7] >> 16) as u8,
-        (l[7] >> 8) as u8,
-        l[7] as u8,
-    ]
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,9 +203,9 @@ mod tests {
     fn test() {
         // the following examples are from the standard documentation
         // of SM3 found at http://www.oscca.gov.cn/sca/xxgk/bzgf.shtml
-        let msg = [0x6162_6300u32];
+        let msg = b"abc";
 
-        let hash = sm3_enc(&msg, 24);
+        let hash = sm3_enc(msg);
         assert_eq!(
             hash,
             [
@@ -221,13 +214,9 @@ mod tests {
             ]
         );
 
-        let msg: [u32; 16] = [
-            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-            0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364, 0x61626364,
-            0x61626364, 0x61626364,
-        ];
+        let msg = b"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
 
-        let hash = sm3_enc(&msg, 512);
+        let hash = sm3_enc(msg);
         assert_eq!(
             hash,
             [

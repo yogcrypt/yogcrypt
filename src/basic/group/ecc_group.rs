@@ -176,7 +176,7 @@ impl JacobiPoint {
 
 pub fn is_on_curve(p: Point) -> bool {
     // is y^2 = x^3 + ax + b ?
-    equal_to(
+    point_equal_to_zero(p) || equal_to(
         (p.y * p.y).num,
         (((p.x * p.x * p.x) + (ECC_A * p.x)) + ECC_B).num,
     )
