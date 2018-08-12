@@ -24,7 +24,6 @@
 //! [OSCCA: SM2 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf)
 use basic::cell::u64x4::*;
 use basic::field::field_n::*;
-use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
 use basic::util::bytes_to_u32_blocks;
 use sm3::*;
@@ -148,33 +147,27 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
         u64::from(e[1]) | (u64::from(e[0]) << 32),
     );
 
-    // ephemeral key
-    let mut k = U64x4::random();
-    while greater_equal(k, MODULO_P) {
-        k = U64x4::random();
-    }
-
-    let mut p_jacobi = times_base_point(k);
-    let mut p = jacobi_to_affine(p_jacobi);
-
     e = to_mod_n(e);
-    let mut r = add_mod_n(e, p.x.num);
-    let d = to_mod_n(d);
 
-    // Calculate s = (1+d)^-1 * (k-r*d);
-    let s = mul_mod_n(
-        get_mul_inv_mod_n(add_mod_n(d, U64x4::new(1, 0, 0, 0))), //(1+d)^-1
-        sub_mod_n(k, mul_mod_n(r, d)),                           //k-r*d
-    );
+    let mut s = U64x4::new(0, 0, 0, 0);
+    let mut r = U64x4::new(0, 0, 0, 0);
+    while equal_to_zero(s) {
+        // ephemeral key
+        let k = get_sec_key();
 
-    while equal_to_zero(r) || equal_to_zero(add_mod_n(r, k)) || equal_to_zero(s) {
-        k = U64x4::random();
-        while greater_equal(k, MODULO_P) {
-            k = U64x4::random();
-        }
-        p_jacobi = times_base_point(k);
-        p = jacobi_to_affine(p_jacobi);
+        let p_jacobi = times_base_point(k);
+        let p = jacobi_to_affine(p_jacobi);
+
         r = add_mod_n(e, p.x.num);
+        if equal_to_zero(r) || equal_to_zero(add_mod_n(r, k)) {
+            continue;
+        }
+
+        // Calculate s = (1+d)^-1 * (k-r*d);
+        s = mul_mod_n(
+            get_mul_inv_mod_n(add_mod_n(d, U64x4::new(1, 0, 0, 0))), //(1+d)^-1
+            sub_mod_n(k, mul_mod_n(r, d)),                           //k-r*d
+        );
     }
 
     Signature { r, s }
