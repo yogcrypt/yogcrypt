@@ -22,7 +22,7 @@
 //!
 //! [OSCCA: SM3 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf)
 
-use basic::helper::bytes_to_u32_blocks;
+use basic::util::bytes_to_u32_blocks;
 use std::num::Wrapping;
 
 pub type HashValue = [u32; 8];

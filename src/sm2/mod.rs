@@ -26,7 +26,7 @@ use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::field::field_p::MODULO_P;
 use basic::group::ecc_group::*;
-use basic::helper::bytes_to_u32_blocks;
+use basic::util::bytes_to_u32_blocks;
 use sm3::*;
 
 pub type PubKey = Point;
@@ -38,8 +38,11 @@ pub struct Signature {
 
 /// Randomly sample secret key uniformly from [0,..n), where n is the order of the base point
 pub fn get_sec_key() -> SecKey {
-    // TODO replace with random
-    U64x4::new(0, 0, 0, 0)
+    let mut k = U64x4::random();
+    while greater_equal(k, MODULO_N) {
+        k = U64x4::random()
+    }
+    k
 }
 
 /// Compute public key from secret key

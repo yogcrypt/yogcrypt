@@ -9,6 +9,9 @@
 // single characters names are used in accordance to
 // documentation of cryptographic schemes
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
+// Some expressions are too long and are necessarily split into lines
+// No commas are needed in these cases
+#![cfg_attr(feature = "cargo-clippy", allow(possible_missing_comma))]
 extern crate rand;
 
 #[macro_use]
