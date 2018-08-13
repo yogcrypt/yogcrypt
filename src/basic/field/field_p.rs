@@ -81,11 +81,11 @@ impl Add for FieldElement {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        let (mut m, mut overflow_flag) = add_no_mod(self.num, rhs.num);
+        let (mut m, mut overflow_flag) = U64x4::add_no_mod(self.num, rhs.num);
 
         //overflow
         while overflow_flag {
-            let rst = add_no_mod(RHO_P, m);
+            let rst = U64x4::add_no_mod(RHO_P, m);
             m = rst.0;
             overflow_flag = rst.1;
         }
@@ -222,7 +222,7 @@ impl Div for FieldElement {
 }
 
 pub fn to_mod_p(mut num: U64x4) -> FieldElement {
-    while greater_equal(num, MODULO_P) {
+    while num >= MODULO_P {
         num = num - MODULO_P;
     }
 
@@ -230,7 +230,7 @@ pub fn to_mod_p(mut num: U64x4) -> FieldElement {
 }
 
 pub fn get_mul_inv(x: FieldElement) -> FieldElement {
-    if equal_to_zero(x.num) {
+    if x.num.equal_to_zero() {
         return FieldElement::from_u64([0, 0, 0, 0]);
     }
 
@@ -239,14 +239,14 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
     let mut x1 = U64x4::new(1, 0, 0, 0);
     let mut x2 = U64x4::new(0, 0, 0, 0);
 
-    while (!equal_to_one(u)) && (!equal_to_one(v)) {
+    while (!u.equal_to_one()) && (!v.equal_to_one()) {
         while u.value[0] % 2 == 0 {
             u.right_shift_by_one();
 
             if x1.value[0] % 2 == 0 {
                 x1.right_shift_by_one();
             } else {
-                let (u, overflow_flag) = add_no_mod(x1, MODULO_P);
+                let (u, overflow_flag) = U64x4::add_no_mod(x1, MODULO_P);
                 x1 = u;
                 x1.right_shift_by_one();
                 if overflow_flag {
@@ -261,7 +261,7 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
             if x2.value[0] % 2 == 0 {
                 x2.right_shift_by_one();
             } else {
-                let (u, overflow_flag) = add_no_mod(x2, MODULO_P);
+                let (u, overflow_flag) = U64x4::add_no_mod(x2, MODULO_P);
                 x2 = u;
                 x2.right_shift_by_one();
                 if overflow_flag {
@@ -270,7 +270,7 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
             }
         }
 
-        if greater_equal(u, v) {
+        if u >= v {
             u = (FieldElement::new(u) - FieldElement::new(v)).num;
             x1 = (FieldElement::new(x1) - FieldElement::new(x2)).num;
         } else {
@@ -279,7 +279,7 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
         }
     }
 
-    if equal_to_one(u) {
+    if u.equal_to_one() {
         to_mod_p(x1)
     } else {
         to_mod_p(x2)
@@ -294,18 +294,18 @@ mod tests {
     fn test_mul() {
         let ra = u64::from(random::<u32>());
         let rb = u64::from(random::<u32>());
-        let (mut a, f1) = add_no_mod(MODULO_P, U64x4::new(ra, 0, 0, 0));
-        let (mut b, f2) = add_no_mod(MODULO_P, U64x4::new(rb, 0, 0, 0));
+        let (mut a, f1) = U64x4::add_no_mod(MODULO_P, U64x4::new(ra, 0, 0, 0));
+        let (mut b, f2) = U64x4::add_no_mod(MODULO_P, U64x4::new(rb, 0, 0, 0));
         a = if f1 { a + RHO_P } else { a };
         b = if f2 { b + RHO_P } else { b };
         let c = FieldElement::new(a) * FieldElement::new(b);
-        assert!(equal_to(c.num, U64x4::new(ra * rb, 0, 0, 0)));
+        assert_eq!(c.num, U64x4::new(ra * rb, 0, 0, 0));
     }
 
     #[test]
     fn test_inversion() {
         let a = FieldElement::random();
         let b = get_mul_inv(a);
-        assert!(equal_to((a * b).num, U64x4::new(1, 0, 0, 0)));
+        assert_eq!((a * b).num, U64x4::new(1, 0, 0, 0));
     }
 }

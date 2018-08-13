@@ -176,22 +176,19 @@ impl JacobiPoint {
 
 pub fn is_on_curve(p: Point) -> bool {
     // is y^2 = x^3 + ax + b ?
-    point_equal_to_zero(p) || equal_to(
-        (p.y * p.y).num,
-        (((p.x * p.x * p.x) + (ECC_A * p.x)) + ECC_B).num,
-    )
+    point_equal_to_zero(p) || (p.y * p.y).num == (((p.x * p.x * p.x) + (ECC_A * p.x)) + ECC_B).num
 }
 
 pub fn point_equal_to_zero(p: Point) -> bool {
-    equal_to_zero(p.x.num) && equal_to_zero(p.y.num)
+    p.x.num.equal_to_zero() && p.y.num.equal_to_zero()
 }
 
 pub fn point_equal_to(p: Point, q: Point) -> bool {
-    equal_to(p.x.num, q.x.num) && equal_to(p.y.num, q.y.num)
+    p.x.num == q.x.num && p.y.num == q.y.num
 }
 
 pub fn jacobi_point_equal_to_zero(p: JacobiPoint) -> bool {
-    equal_to_one(p.x.num) && equal_to_one(p.y.num) && equal_to_zero(p.z.num)
+    p.x.num.equal_to_one() && p.y.num.equal_to_one() && p.z.num.equal_to_zero()
 }
 
 pub fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
@@ -205,7 +202,7 @@ pub fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
     let s1 = p.y * qz3;
     let s2 = q.y * pz3;
     //return x1==x2*u^2 && y1==y2*u^3
-    equal_to(u1.num, u2.num) && equal_to(s1.num, s2.num)
+    u1.num == u2.num && s1.num == s2.num
 }
 
 pub fn affine_to_jacobi(p: Point) -> JacobiPoint {
@@ -236,7 +233,7 @@ pub fn get_inv_point(p: Point) -> Point {
 }
 
 pub fn is_point_rec(p: Point, q: Point) -> bool {
-    equal_to(p.x.num, q.x.num) && equal_to(p.y.num, (-q.y).num)
+    p.x.num == q.x.num && p.y.num == (-q.y).num
 }
 
 pub fn add_point(p: Point, q: Point) -> Point {
@@ -251,7 +248,7 @@ pub fn add_point(p: Point, q: Point) -> Point {
             y: FieldElement::from_u64([0, 0, 0, 0]),
         }
     } else {
-        let lambda = if equal_to(p.x.num, q.x.num) {
+        let lambda = if p.x.num == q.x.num {
             let x2 = p.x * p.x; //x2 = x^2
             let tx2 = x2 + x2 + x2; // tx2 = 3x^2
             let dx = tx2 + ECC_A; // dx = 3x^2+a;
@@ -291,7 +288,7 @@ pub fn is_jacobi_reciprocal(p: JacobiPoint, q: JacobiPoint) -> bool {
     let s1 = p.y * qz3;
     let s2 = q.y * pz3;
 
-    equal_to(u1.num, u2.num) && equal_to((-s1).num, s2.num)
+    u1.num == u2.num && (-s1).num == s2.num
 }
 
 // Note: this function should
@@ -338,10 +335,10 @@ pub fn add_jacobi_point(p: JacobiPoint, q: JacobiPoint) -> JacobiPoint {
         let lambda2 = q.x * pz2;
 
         //P != Q
-        if !equal_to(lambda1.num, lambda2.num) {
+        if lambda1.num != lambda2.num {
             let lambda4 = p.y * qz3;
             let lambda5 = q.y * pz3;
-            if !equal_to(lambda4.num, lambda5.num) {
+            if lambda4.num != lambda5.num {
                 let lambda3 = lambda1 - lambda2;
                 let lambda6 = lambda4 - lambda5;
                 let lambda7 = lambda1 + lambda2;

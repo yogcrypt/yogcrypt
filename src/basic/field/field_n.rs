@@ -37,7 +37,7 @@ macro_rules! overflowing_add {
 }
 
 pub fn to_mod_n(mut x: U64x4) -> U64x4 {
-    while greater_equal(x, MODULO_N) {
+    while x >= MODULO_N {
         x = x - MODULO_N;
     }
 
@@ -49,7 +49,7 @@ pub fn get_add_inv_mod_n(x: U64x4) -> U64x4 {
 }
 
 pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
-    if equal_to_zero(x) {
+    if x.equal_to_zero() {
         return U64x4::new(0, 0, 0, 0);
     }
 
@@ -58,14 +58,14 @@ pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
     let mut x1 = U64x4::new(1, 0, 0, 0);
     let mut x2 = U64x4::new(0, 0, 0, 0);
 
-    while (!equal_to_one(u)) && (!equal_to_one(v)) {
+    while (!u.equal_to_one()) && (!v.equal_to_one()) {
         while u.value[0] % 2 == 0 {
             u.right_shift_by_one();
 
             if x1.value[0] % 2 == 0 {
                 x1.right_shift_by_one();
             } else {
-                let (u, overflow_flag) = add_no_mod(x1, MODULO_N);
+                let (u, overflow_flag) = U64x4::add_no_mod(x1, MODULO_N);
                 x1 = u;
                 x1.right_shift_by_one();
                 if overflow_flag {
@@ -80,7 +80,7 @@ pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
             if x2.value[0] % 2 == 0 {
                 x2.right_shift_by_one();
             } else {
-                let (u, overflow_flag) = add_no_mod(x2, MODULO_N);
+                let (u, overflow_flag) = U64x4::add_no_mod(x2, MODULO_N);
                 x2 = u;
                 x2.right_shift_by_one();
                 if overflow_flag {
@@ -89,7 +89,7 @@ pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
             }
         }
 
-        if greater_equal(u, v) {
+        if u >= v {
             u = sub_mod_n(u, v);
             x1 = sub_mod_n(x1, x2);
         } else {
@@ -98,13 +98,13 @@ pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
         }
     }
 
-    if equal_to_one(u) {
-        while greater_equal(x1, MODULO_N) {
+    if u.equal_to_one() {
+        while x1 >= MODULO_N {
             x1 = x1 - MODULO_N;
         }
         x1
     } else {
-        while greater_equal(x2, MODULO_N) {
+        while x2 >= MODULO_N {
             x2 = x2 - MODULO_N;
         }
         x2
@@ -132,7 +132,7 @@ pub fn add_mod_n(x: U64x4, y: U64x4) -> U64x4 {
         m = add_mod_n(RHO_N, m);
     }
 
-    if greater_equal(m, MODULO_N) {
+    if m >= MODULO_N {
         m - MODULO_N
     } else {
         m
@@ -157,7 +157,7 @@ fn mont_mul(x: U64x4, y: U64x4) -> U64x4 {
         z = if y.get(i) == 1 { add_mod_n(z, x) } else { z };
 
         if z.value[0] % 2 == 1 {
-            let (u, overflow_flag) = add_no_mod(z, MODULO_N);
+            let (u, overflow_flag) = U64x4::add_no_mod(z, MODULO_N);
             z = u;
             z.right_shift_by_one();
             if overflow_flag {
@@ -168,7 +168,7 @@ fn mont_mul(x: U64x4, y: U64x4) -> U64x4 {
         }
     }
 
-    if greater_equal(z, MODULO_N) {
+    if z >= MODULO_N {
         z - MODULO_N
     } else {
         z
@@ -179,7 +179,7 @@ fn mont_mul(x: U64x4, y: U64x4) -> U64x4 {
 fn mont_red(mut t: U64x4) -> U64x4 {
     for _ in 0..256 {
         if t.value[0] % 2 == 1 {
-            let (u, overflow_flag) = add_no_mod(t, MODULO_N);
+            let (u, overflow_flag) = U64x4::add_no_mod(t, MODULO_N);
             t = u;
             t.right_shift_by_one();
             if overflow_flag {
@@ -190,7 +190,7 @@ fn mont_red(mut t: U64x4) -> U64x4 {
         }
     }
 
-    if greater_equal(t, MODULO_N) {
+    if t >= MODULO_N {
         add_mod_n(t, MODULO_N)
     } else {
         t

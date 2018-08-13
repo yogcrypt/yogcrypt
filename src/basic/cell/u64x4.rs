@@ -5,11 +5,13 @@ use std::ops::{Add, Neg, Sub};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
 use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign};
 
+use std::cmp::Ordering;
+
 use basic::cell::u64x8::*;
 
 use rand::random;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct U64x4 {
     pub value: [u64; 4],
 }
@@ -51,6 +53,18 @@ impl U64x4 {
                 (u64::from(x[5]) << 32) + u64::from(x[4]),
                 (u64::from(x[7]) << 32) + u64::from(x[6]),
             ],
+        }
+    }
+
+    pub fn get(&self, i: usize) -> u64 {
+        let n = i / 64;
+        let x = i % 64;
+        match n {
+            0 => (self.value[0] >> x) % 2,
+            1 => (self.value[1] >> x) % 2,
+            2 => (self.value[2] >> x) % 2,
+            3 => (self.value[3] >> x) % 2,
+            _ => (panic!("unknown n")),
         }
     }
 }
@@ -182,7 +196,7 @@ impl Add for U64x4 {
     type Output = Self;
 
     fn add(self, rhs: U64x4) -> U64x4 {
-        add_no_mod(self, rhs).0
+        U64x4::add_no_mod(self, rhs).0
     }
 }
 
@@ -282,79 +296,73 @@ impl U64x4 {
         self.value[2] |= self.value[3] << 63;
         self.value[3] >>= 1;
     }
+}
 
-    pub fn get(&self, i: usize) -> u64 {
-        let n = i / 64;
-        let x = i % 64;
-        match n {
-            0 => (self.value[0] >> x) % 2,
-            1 => (self.value[1] >> x) % 2,
-            2 => (self.value[2] >> x) % 2,
-            3 => (self.value[3] >> x) % 2,
-            _ => (panic!("unknown n")),
-        }
+impl Ord for U64x4 {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.value[3] > other.value[3] {
+            return Ordering::Greater;
+        };
+        if self.value[3] < other.value[3] {
+            return Ordering::Less;
+        };
+        if self.value[2] > other.value[2] {
+            return Ordering::Greater;
+        };
+        if self.value[2] < other.value[2] {
+            return Ordering::Less;
+        };
+        if self.value[1] > other.value[1] {
+            return Ordering::Greater;
+        };
+        if self.value[1] < other.value[1] {
+            return Ordering::Less;
+        };
+        if self.value[0] > other.value[0] {
+            return Ordering::Greater;
+        };
+        if self.value[0] < other.value[0] {
+            return Ordering::Less;
+        };
+        Ordering::Equal
     }
 }
 
-pub fn greater_equal(x: U64x4, y: U64x4) -> bool {
-    if x.value[3] > y.value[3] {
-        return true;
-    };
-    if x.value[3] < y.value[3] {
-        return false;
-    };
-    if x.value[2] > y.value[2] {
-        return true;
-    };
-    if x.value[2] < y.value[2] {
-        return false;
-    };
-    if x.value[1] > y.value[1] {
-        return true;
-    };
-    if x.value[1] < y.value[1] {
-        return false;
-    };
-    if x.value[0] >= y.value[0] {
-        return true;
-    };
-    false
+impl PartialOrd for U64x4 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
 }
+impl U64x4 {
+    pub fn equal_to_zero(&self) -> bool {
+        self.value[0] == 0 && self.value[1] == 0 && self.value[2] == 0 && self.value[3] == 0
+    }
 
-pub fn equal_to(x: U64x4, y: U64x4) -> bool {
-    x.value[0] == y.value[0]
-        && x.value[1] == y.value[1]
-        && x.value[2] == y.value[2]
-        && x.value[3] == y.value[3]
-}
-
-pub fn equal_to_zero(x: U64x4) -> bool {
-    x.value[0] == 0 && x.value[1] == 0 && x.value[2] == 0 && x.value[3] == 0
-}
-
-pub fn equal_to_one(x: U64x4) -> bool {
-    x.value[0] == 1 && x.value[1] == 0 && x.value[2] == 0 && x.value[3] == 0
+    pub fn equal_to_one(&self) -> bool {
+        self.value[0] == 1 && self.value[1] == 0 && self.value[2] == 0 && self.value[3] == 0
+    }
 }
 
 pub const ZERO: U64x4 = U64x4 {
     value: [0, 0, 0, 0],
 };
+impl U64x4 {
+    pub fn add_no_mod(x: U64x4, y: U64x4) -> (U64x4, bool) {
+        let res0: u64;
+        let res1: u64;
+        let res2: u64;
+        let res3: u64;
+        let mut overflow_flag = false;
 
-pub fn add_no_mod(x: U64x4, y: U64x4) -> (U64x4, bool) {
-    let res0: u64;
-    let res1: u64;
-    let res2: u64;
-    let res3: u64;
-    let mut overflow_flag = false;
+        overflowing_add!(x.value[0], y.value[0], res0, overflow_flag);
+        overflowing_add!(x.value[1], y.value[1], res1, overflow_flag);
+        overflowing_add!(x.value[2], y.value[2], res2, overflow_flag);
+        overflowing_add!(x.value[3], y.value[3], res3, overflow_flag);
 
-    overflowing_add!(x.value[0], y.value[0], res0, overflow_flag);
-    overflowing_add!(x.value[1], y.value[1], res1, overflow_flag);
-    overflowing_add!(x.value[2], y.value[2], res2, overflow_flag);
-    overflowing_add!(x.value[3], y.value[3], res3, overflow_flag);
+        let m = U64x4 {
+            value: [res0, res1, res2, res3],
+        };
 
-    let m = U64x4 {
-        value: [res0, res1, res2, res3],
-    };
-
-    (m, overflow_flag)
+        (m, overflow_flag)
+    }
 }

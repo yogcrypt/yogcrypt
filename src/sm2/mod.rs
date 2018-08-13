@@ -38,7 +38,7 @@ pub struct Signature {
 /// Randomly sample secret key uniformly from [0,..n), where n is the order of the base point
 pub fn get_sec_key() -> SecKey {
     let mut k = U64x4::random();
-    while greater_equal(k, MODULO_N) {
+    while k >= MODULO_N {
         k = U64x4::random()
     }
     k
@@ -151,7 +151,7 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
 
     let mut s = U64x4::new(0, 0, 0, 0);
     let mut r = U64x4::new(0, 0, 0, 0);
-    while equal_to_zero(s) {
+    while s.equal_to_zero() {
         // ephemeral key
         let k = get_sec_key();
 
@@ -159,7 +159,7 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
         let p = jacobi_to_affine(p_jacobi);
 
         r = add_mod_n(e, p.x.num);
-        if equal_to_zero(r) || equal_to_zero(add_mod_n(r, k)) {
+        if r.equal_to_zero() || add_mod_n(r, k).equal_to_zero() {
             continue;
         }
 
@@ -189,10 +189,10 @@ pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signa
     let r = sig.r;
     let s = sig.s;
 
-    if greater_equal(r, MODULO_N) || equal_to_zero(r) {
+    if r >= MODULO_N || r.equal_to_zero() {
         return false;
     }
-    if greater_equal(s, MODULO_N) || equal_to_zero(s) {
+    if s >= MODULO_N || s.equal_to_zero() {
         return false;
     }
     let z_a = get_z(q);
@@ -207,7 +207,7 @@ pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signa
     );
 
     let t = add_mod_n(r, s);
-    if equal_to_zero(t) {
+    if t.equal_to_zero() {
         return false;
     }
 
@@ -219,7 +219,7 @@ pub(crate) fn sm2_ver_sign_inner(msg: &[u32], q: PubKey, len: usize, sig: &Signa
     let r2 = add_mod_n(e1, x1);
 
     // accept if r2 = r
-    equal_to(r2, r)
+    r2 == r
 }
 
 #[cfg(test)]
