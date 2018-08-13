@@ -349,9 +349,6 @@ impl U64x4 {
     }
 }
 
-pub const ZERO: U64x4 = U64x4 {
-    value: [0, 0, 0, 0],
-};
 impl U64x4 {
     pub fn add_no_mod(x: U64x4, y: U64x4) -> (U64x4, bool) {
         let res0: u64;

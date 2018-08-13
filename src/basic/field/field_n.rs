@@ -151,7 +151,7 @@ pub fn mul_mod_n(x: U64x4, y: U64x4) -> U64x4 {
 }
 
 fn mont_mul(x: U64x4, y: U64x4) -> U64x4 {
-    let mut z = ZERO;
+    let mut z = U64x4::zero();
 
     for i in 0..256 {
         z = if y.get(i) == 1 { add_mod_n(z, x) } else { z };
