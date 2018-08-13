@@ -50,13 +50,13 @@ pub fn get_add_inv_mod_n(x: U64x4) -> U64x4 {
 
 pub fn get_mul_inv_mod_n(x: U64x4) -> U64x4 {
     if x.equal_to_zero() {
-        return U64x4::new(0, 0, 0, 0);
+        return U64x4::zero();
     }
 
     let mut u = x;
     let mut v = MODULO_N;
     let mut x1 = U64x4::new(1, 0, 0, 0);
-    let mut x2 = U64x4::new(0, 0, 0, 0);
+    let mut x2 = U64x4::zero();
 
     while (!u.equal_to_one()) && (!v.equal_to_one()) {
         while u.value[0] % 2 == 0 {

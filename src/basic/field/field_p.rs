@@ -237,7 +237,7 @@ pub fn get_mul_inv(x: FieldElement) -> FieldElement {
     let mut u = x.num;
     let mut v = MODULO_P;
     let mut x1 = U64x4::new(1, 0, 0, 0);
-    let mut x2 = U64x4::new(0, 0, 0, 0);
+    let mut x2 = U64x4::zero();
 
     while (!u.equal_to_one()) && (!v.equal_to_one()) {
         while u.value[0] % 2 == 0 {

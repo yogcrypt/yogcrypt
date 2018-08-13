@@ -149,8 +149,8 @@ pub(crate) fn sm2_gen_sign_inner(msg: &[u32], d: SecKey, q: PubKey, len: usize) 
 
     e = to_mod_n(e);
 
-    let mut s = U64x4::new(0, 0, 0, 0);
-    let mut r = U64x4::new(0, 0, 0, 0);
+    let mut s = U64x4::zero();
+    let mut r = U64x4::zero();
     while s.equal_to_zero() {
         // ephemeral key
         let k = get_sec_key();

@@ -34,6 +34,12 @@ impl U64x4 {
         }
     }
 
+    pub fn zero() -> Self {
+        Self {
+            value: [0, 0, 0, 0],
+        }
+    }
+
     pub fn random() -> Self {
         Self {
             value: [
