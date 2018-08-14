@@ -1,9 +1,13 @@
+//! Implementations for field operations on the field of order `MODULO_P`
+//!
+//! The underlying struct is `U64x4`
 use basic::cell::u64x4::*;
 use rand::random;
 use std::fmt;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+/// Modulus
 pub const MODULO_P: U64x4 = U64x4 {
     value: [
         0xFFFFFFFFFFFFFFFF,
@@ -12,6 +16,8 @@ pub const MODULO_P: U64x4 = U64x4 {
         0xFFFFFFFEFFFFFFFF,
     ],
 };
+
+/// The remainder of `1 << 256` in the field
 const RHO_P: U64x4 = U64x4 {
     value: [
         0x0000000000000001,
@@ -20,6 +26,8 @@ const RHO_P: U64x4 = U64x4 {
         0x0000000100000000,
     ],
 };
+
+/// Inverse of 2
 pub const INV_2P: FieldElement = FieldElement {
     num: U64x4 {
         value: [
@@ -37,8 +45,7 @@ impl Display for FieldElement {
     }
 }
 
-/// A `FieldElement` represents an element of the prime field
-/// \\( \mathbb Z / (MODULO_P)\\).
+/// A `FieldElement` represents an element of the prime field of order `MODULO_P`
 ///
 /// # Note
 /// The underlying implementation uses functionality prvided by `U64x4`.
@@ -51,22 +58,27 @@ pub struct FieldElement {
 }
 
 impl FieldElement {
+    /// Construct an element directly from `U64x4`
     pub fn new(num: U64x4) -> Self {
         to_mod_p(num)
     }
 
+    /// Construct an element from 4 `u64`'s
     pub fn from_u64(value: [u64; 4]) -> Self {
         to_mod_p(U64x4 { value })
     }
 
+    /// Construct an element from 8 `u32`'s
     pub fn from_u32(value: [u32; 8]) -> Self {
         to_mod_p(U64x4::from_u32(value))
     }
 
+    /// A wrapper method for accessing the `u64` blocks
     pub fn value(self, i: usize) -> u64 {
         self.num.value[i]
     }
 
+    /// Return a random element from the field
     pub fn random() -> Self {
         FieldElement::from_u64([
             random::<u64>(),
@@ -221,7 +233,7 @@ impl Div for FieldElement {
     }
 }
 
-pub fn to_mod_p(mut num: U64x4) -> FieldElement {
+pub(crate) fn to_mod_p(mut num: U64x4) -> FieldElement {
     while num >= MODULO_P {
         num = num - MODULO_P;
     }

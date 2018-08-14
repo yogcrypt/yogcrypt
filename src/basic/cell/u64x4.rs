@@ -1,3 +1,6 @@
+//! An internal class for 256-bit numbers
+//!
+//! **NOTE**: the 64-bits are stored in little endian
 use std::fmt;
 use std::fmt::Display;
 
@@ -13,6 +16,7 @@ use rand::random;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct U64x4 {
+    // value[0] is the lower order 64 bits
     pub value: [u64; 4],
 }
 
@@ -28,18 +32,21 @@ macro_rules! overflowing_add {
 }
 
 impl U64x4 {
+    /// Create a number with 4 64-bits, with x0 being the less significant digits
     pub fn new(x0: u64, x1: u64, x2: u64, x3: u64) -> Self {
         Self {
             value: [x0, x1, x2, x3],
         }
     }
 
+    /// The representation for 0
     pub fn zero() -> Self {
         Self {
             value: [0, 0, 0, 0],
         }
     }
 
+    /// Return a random 256-bit number
     pub fn random() -> Self {
         Self {
             value: [
@@ -51,6 +58,7 @@ impl U64x4 {
         }
     }
 
+    /// Construct the number from 8 `u32`
     pub fn from_u32(x: [u32; 8]) -> Self {
         Self {
             value: [
@@ -62,6 +70,7 @@ impl U64x4 {
         }
     }
 
+    /// Access the `i`-th lowest bit
     pub fn get(&self, i: usize) -> u64 {
         let n = i / 64;
         let x = i % 64;
@@ -350,6 +359,7 @@ impl U64x4 {
 }
 
 impl U64x4 {
+    /// 256-bit addition with carry bit
     pub fn add_no_mod(x: U64x4, y: U64x4) -> (U64x4, bool) {
         let res0: u64;
         let res1: u64;

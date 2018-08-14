@@ -1,8 +1,12 @@
+//! Elliptic curve group operations
+//!
+//! Underlying structs are `fieldElement` in `field_p.rs`.
 use basic::cell::u64x4::*;
 use basic::field::field_p::*;
 use std::fmt;
 use std::fmt::Display;
 
+/// Coefficient a of the curves as in y^2 = x^3 + ax + b
 pub const ECC_A: FieldElement = FieldElement {
     num: U64x4 {
         value: [
@@ -13,6 +17,8 @@ pub const ECC_A: FieldElement = FieldElement {
         ],
     },
 };
+
+/// Coefficient b of the curves as in y^2 = x^3 + ax + b
 pub const ECC_B: FieldElement = FieldElement {
     num: U64x4 {
         value: [
@@ -23,6 +29,8 @@ pub const ECC_B: FieldElement = FieldElement {
         ],
     },
 };
+
+/// `x` index of base point on the curve (recommended parameters for `sm2`)
 pub const ECC_GX: FieldElement = FieldElement {
     num: U64x4 {
         value: [
@@ -33,6 +41,8 @@ pub const ECC_GX: FieldElement = FieldElement {
         ],
     },
 };
+
+/// `y` index of base point on the curve (recommended parameters for `sm2`)
 pub const ECC_GY: FieldElement = FieldElement {
     num: U64x4 {
         value: [
@@ -44,11 +54,13 @@ pub const ECC_GY: FieldElement = FieldElement {
     },
 };
 
+/// Base point on the curve (recommended parameters for `sm2`)
 pub const ECC_G: Point = Point {
     x: ECC_GX,
     y: ECC_GY,
 };
 
+/// Representation for point at infinity is (1,1,0) in Jacobi coordinates
 pub const ZERO_JACOBI: JacobiPoint = JacobiPoint {
     x: FieldElement {
         num: U64x4 {
@@ -67,6 +79,7 @@ pub const ZERO_JACOBI: JacobiPoint = JacobiPoint {
     },
 };
 
+/// Pre-computation for base point multiplications
 lazy_static! {
     static ref LOW_TABLE: Vec<Point> = {
         // save G, 2G, 4G, ... for later use
@@ -137,6 +150,7 @@ lazy_static! {
     };
 }
 
+/// Point on curve with affine coordinates
 #[derive(Copy, Clone)]
 pub struct Point {
     pub x: FieldElement,
@@ -149,6 +163,7 @@ impl Display for Point {
     }
 }
 
+/// Point on curve with Jacobi coordinates
 #[derive(Copy, Clone)]
 pub struct JacobiPoint {
     pub x: FieldElement,
@@ -174,23 +189,28 @@ impl JacobiPoint {
     }
 }
 
+/// Return if the point is on curve
 pub fn is_on_curve(p: Point) -> bool {
     // is y^2 = x^3 + ax + b ?
     point_equal_to_zero(p) || (p.y * p.y).num == (((p.x * p.x * p.x) + (ECC_A * p.x)) + ECC_B).num
 }
 
+/// Return if the point is the point at infinity
 pub fn point_equal_to_zero(p: Point) -> bool {
     p.x.num.equal_to_zero() && p.y.num.equal_to_zero()
 }
 
+/// Return if the points are equal
 pub fn point_equal_to(p: Point, q: Point) -> bool {
     p.x.num == q.x.num && p.y.num == q.y.num
 }
 
+/// Return if the point (in Jacobi coordinates) is the point at infinity
 pub fn jacobi_point_equal_to_zero(p: JacobiPoint) -> bool {
     p.x.num.equal_to_one() && p.y.num.equal_to_one() && p.z.num.equal_to_zero()
 }
 
+/// Return if the point (in Jacobi coordinates) are equal
 pub fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
     let pz2 = p.z * p.z;
     let pz3 = pz2 * p.z;
@@ -205,6 +225,7 @@ pub fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
     u1.num == u2.num && s1.num == s2.num
 }
 
+/// Convert a point from affine coordinates to Jacobi coordinates
 pub fn affine_to_jacobi(p: Point) -> JacobiPoint {
     if !point_equal_to_zero(p) {
         JacobiPoint {
@@ -217,6 +238,7 @@ pub fn affine_to_jacobi(p: Point) -> JacobiPoint {
     }
 }
 
+/// Convert a point from Jacobi coordinates to affine coordinates
 pub fn jacobi_to_affine(p: JacobiPoint) -> Point {
     let u = get_mul_inv(p.z);
     let u2 = u * u;
@@ -228,14 +250,17 @@ pub fn jacobi_to_affine(p: JacobiPoint) -> Point {
     }
 }
 
+/// Compute the inverse (w.r.t group operation) of the point
 pub fn get_inv_point(p: Point) -> Point {
     Point { x: p.x, y: -p.y }
 }
 
+/// Determine if the points are inverse of each other
 pub fn is_point_rec(p: Point, q: Point) -> bool {
     p.x.num == q.x.num && p.y.num == (-q.y).num
 }
 
+/// Addition (group operation) of two points (in affine-affine coordinates)
 pub fn add_point(p: Point, q: Point) -> Point {
     if point_equal_to_zero(p) || point_equal_to_zero(q) {
         Point {
@@ -269,6 +294,7 @@ pub fn add_point(p: Point, q: Point) -> Point {
     }
 }
 
+/// Compute the inverse (w.r.t group operation) of the point (in Jacobi coordinates)
 pub fn get_inv_jacobi_point(p: JacobiPoint) -> JacobiPoint {
     JacobiPoint {
         x: p.x,
@@ -277,7 +303,8 @@ pub fn get_inv_jacobi_point(p: JacobiPoint) -> JacobiPoint {
     }
 }
 
-pub fn is_jacobi_reciprocal(p: JacobiPoint, q: JacobiPoint) -> bool {
+/// Determine if the points (in Jacobi coordinates) are inverse of each other
+pub fn is_jacobi_rec(p: JacobiPoint, q: JacobiPoint) -> bool {
     let pz2 = p.z * p.z;
     let pz3 = pz2 * p.z;
     let qz2 = q.z * q.z;
@@ -291,8 +318,9 @@ pub fn is_jacobi_reciprocal(p: JacobiPoint, q: JacobiPoint) -> bool {
     u1.num == u2.num && (-s1).num == s2.num
 }
 
-// Note: this function should
-// ALWAYS be called with different point
+/// Addition (group operation) of two points (in affine-Jacobi coordinates)
+///
+/// **Note**: this function should be called with different points
 pub fn add_jacobi_affine(p: JacobiPoint, q: Point) -> JacobiPoint {
     if jacobi_point_equal_to_zero(p) {
         affine_to_jacobi(q)
@@ -314,13 +342,7 @@ pub fn add_jacobi_affine(p: JacobiPoint, q: Point) -> JacobiPoint {
     }
 }
 
-pub fn neg_jacobiacob(p: JacobiPoint) -> JacobiPoint {
-    let x = p.x;
-    let y = -p.y;
-    let z = p.z;
-    JacobiPoint { x, y, z }
-}
-
+/// Addition (group operation) of two points (in Jacobi-Jacobi coordinates)
 pub fn add_jacobi_point(p: JacobiPoint, q: JacobiPoint) -> JacobiPoint {
     if jacobi_point_equal_to_zero(p) {
         q
@@ -386,7 +408,11 @@ pub fn add_jacobi_point(p: JacobiPoint, q: JacobiPoint) -> JacobiPoint {
     }
 }
 
-// Note: this function return A Jacobi Point
+/// Scalar multiplication of a point
+///
+/// This operation is also known as `exponentiation` and is the core operation of elliptic curve cryptography.
+///
+/// **Note**: this function return A `JacobiPoint`.
 pub fn times_point(p: Point, times: U64x4) -> JacobiPoint {
     let mut t = ZERO_JACOBI;
 
@@ -418,9 +444,10 @@ fn to_index(u: U64x4, i: usize) -> usize {
         + (get_bit(u.value[3], 32 + i) << 7)
 }
 
-// Speed up using Fixed-base comb
-// described in "Software Implementation of the NIST Elliptic
-// Curves Over Prime Fields" by M Brown et. al.
+/// Scalar multiplication of the base point
+///
+/// The implemenation is faster than `times_point` by Speeding up using Fixed-base comb described in
+/// "Software Implementation of the NIST Elliptic Curves Over Prime Fields" by M Brown et. al.
 pub fn times_base_point(times: U64x4) -> JacobiPoint {
     let mut t = ZERO_JACOBI;
     for i in (0..16).rev() {

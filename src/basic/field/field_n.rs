@@ -1,3 +1,6 @@
+//! Field operations on the field of order `MODULO_N`
+//!
+//! The underlying struct is `U64x4`.
 use basic::cell::u64x4::*;
 
 pub const MODULO_N: U64x4 = U64x4 {
@@ -36,7 +39,7 @@ macro_rules! overflowing_add {
     };
 }
 
-pub fn to_mod_n(mut x: U64x4) -> U64x4 {
+pub(crate) fn to_mod_n(mut x: U64x4) -> U64x4 {
     while x >= MODULO_N {
         x = x - MODULO_N;
     }
