@@ -1,3 +1,22 @@
+//! **A fast, general purpose crypto library in pure Rust.**
+//!
+//! YogCrypt is designed to be a high-performance, general purpose crypto library.
+//!
+//! YogCrypt currently provides three cryptographic algorithms in Chinese National
+//! Standard, namely the SM2 cryptographic asymmetric algorithm, the SM3
+//! cryptographic hash algorithm, and the SM4 block cipher algorithm.
+//!
+//! ## REPO
+//!
+//! YogCrypt is currently hosted on [Github](https://github.com/yogcrypt/yogcrypt).
+//!
+//! ## License
+//!
+//! YogCrypt is distributed under the terms of both the MIT license and the Apache
+//! License (Version 2.0).
+//!
+//! See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for details.
+
 // make the linter allow the following usage
 
 // literals declartion are used in S boxes which are
