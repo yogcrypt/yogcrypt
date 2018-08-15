@@ -1,4 +1,6 @@
-# YogCrypt [![Build Status](https://travis-ci.com/yogcrypt/yogcrypt.svg?branch=master)](https://travis-ci.com/yogcrypt/yogcrypt)
+# YogCrypt
+
+[![Build Status](https://travis-ci.com/yogcrypt/yogcrypt.svg?branch=master)](https://travis-ci.com/yogcrypt/yogcrypt)
 
 **A fast, general purpose crypto library in pure Rust.**
 
@@ -7,6 +9,11 @@ YogCrypt is designed to be a high-performance, general purpose crypto library.
 YogCrypt currently provides three cryptographic algorithms in Chinese National
 Standard, namely the SM2 cryptographic asymmetric algorithm, the SM3
 cryptographic hash algorithm, and the SM4 block cipher algorithm.
+
+## Contributing
+
+YogCrypt is maintained by @liuwenling, @Messjer, and @mssun. Please see
+[CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## License
 
