@@ -1,7 +1,7 @@
 [package]
 name = "yogcrypt"
 version = "0.1.0"
-authors = ["The Yogcrypt Project Contributors"]
+authors = ["The YogCrypt Project Contributors"]
 readme = "README.md"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/yogcrypt/yogcrypt"
