@@ -6,16 +6,10 @@
 //! Standard, namely the SM2 cryptographic asymmetric algorithm, the SM3
 //! cryptographic hash algorithm, and the SM4 block cipher algorithm.
 //!
-//! ## REPO
-//!
-//! YogCrypt is currently hosted on [Github](https://github.com/yogcrypt/yogcrypt).
-//!
 //! ## License
 //!
 //! YogCrypt is distributed under the terms of both the MIT license and the Apache
-//! License (Version 2.0).
-//!
-//! See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for details.
+//! License (Version 2.0). See LICENSE-APACHE and LICENSE-MIT for details.
 
 // make the linter allow the following usage
 
