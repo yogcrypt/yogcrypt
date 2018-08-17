@@ -1,5 +1,4 @@
 language: rust
-cache: cargo
 rust:
   - stable
   - nightly
@@ -59,6 +58,10 @@ before_script:
 script:
   - cargo build --verbose --all --target $TARGET
   - if [[ "$TEST" == "1" ]]; then cargo test --release --verbose --all; fi
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
 notifications:
   email:
     on_success: never
