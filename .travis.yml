@@ -4,10 +4,11 @@ rust:
   - stable
   - nightly
 env:
-  - TARGET=x86_64-unknown-linux-gnu TEST=1
-  - TARGET=x86_64-unknown-linux-musl
-  - TARGET=aarch64-unknown-linux-gnu RUSTFLAGS="-C linker=aarch64-linux-gnu-gcc"
-  - TARGET=arm-unknown-linux-gnueabi RUSTFLAGS="-C linker=arm-linux-gnueabi-gcc"
+  matrix:
+    - TARGET=x86_64-unknown-linux-gnu TEST=1
+    - TARGET=x86_64-unknown-linux-musl
+    - TARGET=aarch64-unknown-linux-gnu RUSTFLAGS="-C linker=aarch64-linux-gnu-gcc"
+    - TARGET=arm-unknown-linux-gnueabi RUSTFLAGS="-C linker=arm-linux-gnueabi-gcc"
 matrix:
   include:
     - rust: 1.27.2
