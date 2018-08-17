@@ -8,8 +8,6 @@ env:
     - TARGET=x86_64-unknown-linux-musl
     - TARGET=aarch64-unknown-linux-gnu RUSTFLAGS="-C linker=aarch64-linux-gnu-gcc"
     - TARGET=arm-unknown-linux-gnueabi RUSTFLAGS="-C linker=arm-linux-gnueabi-gcc"
-  global:
-    secure: "pg/Mf3UyXI8+jvfKgUC/xI7Cdub2kPf3mE8BC8nE+ov9iGDGCFnmqLhS0SqyGNf5vxYO9DPL9S36ZT2Hs9OOVt522IN+uvd1s/wwnHswZxOf/9yHkUxA/j8h8vJ3VJyC9IAf8xzfZlfE8hkABzmvcatcyWqbebxv3cE92BCV5AG5WnPxlPTNx7fW11m7gQjlZvdL8zq+Re9Ei2T+n5LhGx4Ur2MYTD/tAlw9J7zQJTXGbFmkS8Qy756KGx0QhEM907/d9nbEwFfxxTSpDA+L2dxOrxH1oaQPG6x1OPK4WQXYb2aJXjAI9Vk1IUyBcnRyIdfyF+t9aJRcsI04/I5cQjjry3cORDM3xWh6yDWLJd1/WBgq9eLPbE6ZaSQYyLabKnKW58vgXRW8sp+HY/oAbAU5QFaulW/XmVA3JQvkp6TienvzeLaBJEqeP4pVNder7dukthcOyC2TzyScR+sP2DHHeDFae9qESU4sBUCiRvjwtvkWCrwTlTbHJLuU9dQzHVVDED9g3g0RjLq/oDYXBrzh1gGznyK1BKaDCLEal4SKhYGtBthfWH9KR5YGQjhQ6/Tpg3hzAeb+2uEO7Fdkoh4s70xX7LQaFpXvgbZxkDgk2N8JN/PCTnSasS7x5uSA4mUgEQ6L23WUrR8phDyDjUGTP2fpB+e6ho1YmkvIGCU="
 matrix:
   include:
     - rust: 1.27.2
