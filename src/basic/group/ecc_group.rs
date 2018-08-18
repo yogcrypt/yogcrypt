@@ -6,8 +6,19 @@ use basic::field::field_p::*;
 use std::fmt;
 use std::fmt::Display;
 
+/// A coordinate is an element from the field with order `MODULO_P`.
+///
+/// ## Usage
+/// ```no_run
+///     extern crate yogcrypt;
+///     use yogcrypt::sm2::*;
+///
+///     let x = Coordinate::from_u64([0x7b706375_42fb998e, 0x00f78ba4_e992817f, 0x6fcbd376_2040ded0, 0xa06c2b7e_e7b810bd]);
+/// ```
+pub type Coordinate = FieldElement;
+
 /// Coefficient a of the curves as in y^2 = x^3 + ax + b
-pub const ECC_A: FieldElement = FieldElement {
+pub const ECC_A: Coordinate = Coordinate {
     num: U64x4 {
         value: [
             0xFFFFFFFFFFFFFFFC,
@@ -19,7 +30,7 @@ pub const ECC_A: FieldElement = FieldElement {
 };
 
 /// Coefficient b of the curves as in y^2 = x^3 + ax + b
-pub const ECC_B: FieldElement = FieldElement {
+pub const ECC_B: Coordinate = Coordinate {
     num: U64x4 {
         value: [
             0xDDBCBD414D940E93,
@@ -31,7 +42,7 @@ pub const ECC_B: FieldElement = FieldElement {
 };
 
 /// `x` index of base point on the curve (recommended parameters for `sm2`)
-pub const ECC_GX: FieldElement = FieldElement {
+pub const ECC_GX: Coordinate = Coordinate {
     num: U64x4 {
         value: [
             0x715A4589334C74C7,
@@ -43,7 +54,7 @@ pub const ECC_GX: FieldElement = FieldElement {
 };
 
 /// `y` index of base point on the curve (recommended parameters for `sm2`)
-pub const ECC_GY: FieldElement = FieldElement {
+pub const ECC_GY: Coordinate = Coordinate {
     num: U64x4 {
         value: [
             0x02DF32E52139F0A0,
@@ -62,17 +73,17 @@ pub const ECC_G: Point = Point {
 
 /// Representation for point at infinity is (1,1,0) in Jacobi coordinates
 pub const ZERO_JACOBI: JacobiPoint = JacobiPoint {
-    x: FieldElement {
+    x: Coordinate {
         num: U64x4 {
             value: [1, 0, 0, 0],
         },
     },
-    y: FieldElement {
+    y: Coordinate {
         num: U64x4 {
             value: [1, 0, 0, 0],
         },
     },
-    z: FieldElement {
+    z: Coordinate {
         num: U64x4 {
             value: [0, 0, 0, 0],
         },
@@ -153,8 +164,8 @@ lazy_static! {
 /// Point on curve with affine coordinates
 #[derive(Copy, Clone)]
 pub struct Point {
-    pub x: FieldElement,
-    pub y: FieldElement,
+    pub x: Coordinate,
+    pub y: Coordinate,
 }
 
 impl Display for Point {
@@ -166,9 +177,9 @@ impl Display for Point {
 /// Point on curve with Jacobi coordinates
 #[derive(Copy, Clone)]
 pub struct JacobiPoint {
-    pub x: FieldElement,
-    pub y: FieldElement,
-    pub z: FieldElement,
+    pub x: Coordinate,
+    pub y: Coordinate,
+    pub z: Coordinate,
 }
 
 impl Display for JacobiPoint {
@@ -178,14 +189,8 @@ impl Display for JacobiPoint {
 }
 
 impl Point {
-    pub fn new(x: FieldElement, y: FieldElement) -> Point {
+    pub fn new(x: Coordinate, y: Coordinate) -> Point {
         Point { x, y }
-    }
-}
-
-impl JacobiPoint {
-    pub fn new(x: FieldElement, y: FieldElement, z: FieldElement) -> JacobiPoint {
-        JacobiPoint { x, y, z }
     }
 }
 
@@ -200,29 +205,9 @@ pub fn point_equal_to_zero(p: Point) -> bool {
     p.x.num.equal_to_zero() && p.y.num.equal_to_zero()
 }
 
-/// Return if the points are equal
-pub fn point_equal_to(p: Point, q: Point) -> bool {
-    p.x.num == q.x.num && p.y.num == q.y.num
-}
-
 /// Return if the point (in Jacobi coordinates) is the point at infinity
 pub fn jacobi_point_equal_to_zero(p: JacobiPoint) -> bool {
     p.x.num.equal_to_one() && p.y.num.equal_to_one() && p.z.num.equal_to_zero()
-}
-
-/// Return if the point (in Jacobi coordinates) are equal
-pub fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
-    let pz2 = p.z * p.z;
-    let pz3 = pz2 * p.z;
-    let qz2 = q.z * q.z;
-    let qz3 = qz2 * q.z;
-
-    let u1 = p.x * qz2;
-    let u2 = q.x * pz2;
-    let s1 = p.y * qz3;
-    let s2 = q.y * pz3;
-    //return x1==x2*u^2 && y1==y2*u^3
-    u1.num == u2.num && s1.num == s2.num
 }
 
 /// Convert a point from affine coordinates to Jacobi coordinates
@@ -231,7 +216,7 @@ pub fn affine_to_jacobi(p: Point) -> JacobiPoint {
         JacobiPoint {
             x: p.x,
             y: p.y,
-            z: FieldElement::from_u64([1, 0, 0, 0]),
+            z: Coordinate::from_u64([1, 0, 0, 0]),
         }
     } else {
         ZERO_JACOBI
@@ -248,74 +233,6 @@ pub fn jacobi_to_affine(p: JacobiPoint) -> Point {
         x: p.x * u2,
         y: p.y * u3,
     }
-}
-
-/// Compute the inverse (w.r.t group operation) of the point
-pub fn get_inv_point(p: Point) -> Point {
-    Point { x: p.x, y: -p.y }
-}
-
-/// Determine if the points are inverse of each other
-pub fn is_point_rec(p: Point, q: Point) -> bool {
-    p.x.num == q.x.num && p.y.num == (-q.y).num
-}
-
-/// Addition (group operation) of two points (in affine-affine coordinates)
-pub fn add_point(p: Point, q: Point) -> Point {
-    if point_equal_to_zero(p) || point_equal_to_zero(q) {
-        Point {
-            x: p.x + q.x,
-            y: p.y + q.y,
-        }
-    } else if is_point_rec(p, q) {
-        Point {
-            x: FieldElement::from_u64([0, 0, 0, 0]),
-            y: FieldElement::from_u64([0, 0, 0, 0]),
-        }
-    } else {
-        let lambda = if p.x.num == q.x.num {
-            let x2 = p.x * p.x; //x2 = x^2
-            let tx2 = x2 + x2 + x2; // tx2 = 3x^2
-            let dx = tx2 + ECC_A; // dx = 3x^2+a;
-            let dy = p.y + p.y;
-            dx / dy //= (3x^2+a)/2y
-        } else {
-            let s1 = q.y - p.y;
-            let s2 = q.x - p.x;
-            s1 / s2
-        };
-
-        let lambda2 = lambda * lambda;
-
-        let x = lambda2 - (p.x + q.x);
-        let y = (lambda * (p.x - x)) - p.y;
-
-        Point { x, y }
-    }
-}
-
-/// Compute the inverse (w.r.t group operation) of the point (in Jacobi coordinates)
-pub fn get_inv_jacobi_point(p: JacobiPoint) -> JacobiPoint {
-    JacobiPoint {
-        x: p.x,
-        y: -p.y,
-        z: p.z,
-    }
-}
-
-/// Determine if the points (in Jacobi coordinates) are inverse of each other
-pub fn is_jacobi_rec(p: JacobiPoint, q: JacobiPoint) -> bool {
-    let pz2 = p.z * p.z;
-    let pz3 = pz2 * p.z;
-    let qz2 = q.z * q.z;
-    let qz3 = qz2 * q.z;
-
-    let u1 = p.x * qz2;
-    let u2 = q.x * pz2;
-    let s1 = p.y * qz3;
-    let s2 = q.y * pz3;
-
-    u1.num == u2.num && (-s1).num == s2.num
 }
 
 /// Addition (group operation) of two points (in affine-Jacobi coordinates)
@@ -463,6 +380,21 @@ pub fn times_base_point(times: U64x4) -> JacobiPoint {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Return if the point (in Jacobi coordinates) are equal
+    fn jacobi_point_equal_to(p: JacobiPoint, q: JacobiPoint) -> bool {
+        let pz2 = p.z * p.z;
+        let pz3 = pz2 * p.z;
+        let qz2 = q.z * q.z;
+        let qz3 = qz2 * q.z;
+
+        let u1 = p.x * qz2;
+        let u2 = q.x * pz2;
+        let s1 = p.y * qz3;
+        let s2 = q.y * pz3;
+        //return x1==x2*u^2 && y1==y2*u^3
+        u1.num == u2.num && s1.num == s2.num
+    }
 
     #[test]
     fn test_add_jacobi_affine() {
