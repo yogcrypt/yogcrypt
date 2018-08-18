@@ -14,6 +14,15 @@ use basic::cell::u64x8::*;
 
 use rand::random;
 
+/// A 256-bit number represented using four `u64`'s.
+///
+/// ## Usage
+/// ```no_run
+///     extern crate yogcrypt;
+///     use yogcrypt::sm2::*;
+///
+///     let some_num = U64x4::new(0xd8cb4986_918e9375, 0x3055dfcc_d2870256, 0x973ccca3_1d33bd55, 0xf6fed50c_fd14ede7);
+/// ```
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct U64x4 {
     // value[0] is the lower order 64 bits
