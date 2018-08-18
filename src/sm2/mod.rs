@@ -22,14 +22,40 @@
 //! Most variable's name in the source code are in accordance with the document.
 //!
 //! [OSCCA: SM2 document](http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf)
-use basic::cell::u64x4::*;
 use basic::field::field_n::*;
 use basic::group::ecc_group::*;
 use basic::util::bytes_to_u32_blocks;
 use sm3::*;
 
+pub use basic::group::ecc_group::Coordinate;
+
+pub use basic::cell::u64x4::U64x4;
+
+/// A public key is a point on the elliptic curve group.
+///
+/// ## Usage
+/// ```no-run
+///     extern crate yogcrypt;
+///     use yogcrypt::sm2::*;
+///
+///     let x = Coordinate::from_u64([0x7b706375_42fb998e, 0x00f78ba4_e992817f, 0x6fcbd376_2040ded0, 0xa06c2b7e_e7b810bd]);
+///     let y = Coordinate::from_u64([0xd8cb4986_918e9375, 0x3055dfcc_d2870256, 0x973ccca3_1d33bd55, 0xf6fed50c_fd14ede7]);
+///     let pk = PubKey::new(x,y);
+/// ```
 pub type PubKey = Point;
+
+/// A secret key is an element from the field with order `MODULO_N`.
+///
+/// ## Usage
+/// ```no_run
+///     extern crate yogcrypt;
+///     use yogcrypt::sm2::*;
+///
+///     let x: SecKey = get_sec_key();
+/// ```
 pub type SecKey = U64x4;
+
+/// A signature (tag) consists of two fields: `r` and `s`, each is a 256 bit number
 pub struct Signature {
     pub r: U64x4,
     pub s: U64x4,
