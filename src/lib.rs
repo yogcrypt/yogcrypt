@@ -30,7 +30,7 @@ extern crate rand;
 #[macro_use]
 extern crate lazy_static;
 
-pub mod basic;
+mod basic;
 pub mod sm2;
 pub mod sm3;
 pub mod sm4;

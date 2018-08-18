@@ -3,15 +3,12 @@
 /// Convert bytes into `[u32]` blocks for internal representations.
 ///
 /// ## Example
-/// ```
-/// extern crate yogcrypt;
-/// use yogcrypt::basic::util::bytes_to_u32_blocks;
-///
+/// ``
 /// let msg = b"abcde";
 /// let (msg, bit_len) = bytes_to_u32_blocks(msg);
 /// assert_eq!(msg, vec![0x61626364, 0x65000000]);
 /// assert_eq!(bit_len, 40);
-/// ```
+/// ``
 pub fn bytes_to_u32_blocks(msg: &[u8]) -> (Vec<u32>, usize) {
     // bit length = msg.len() * 8
     let bit_len = msg.len() << 3;
@@ -41,14 +38,11 @@ pub fn bytes_to_u32_blocks(msg: &[u8]) -> (Vec<u32>, usize) {
 /// Converts representation of 128-bit number from `[u8;16]` to blocks of `[u32;8]`.
 ///
 /// ## Example
-/// ```
-/// extern crate yogcrypt;
-/// use yogcrypt::basic::util::bytes_to_four_u32;
-///
+/// ``
 /// let key = b"Hello, World!123";
 /// let u32_blocks = bytes_to_four_u32(key);
 /// assert_eq!(u32_blocks, [1214606444, 1865162839, 1869769828, 556872243]);
-/// ```
+/// ``
 pub fn bytes_to_four_u32(b: &[u8; 16]) -> [u32; 4] {
     [
         (u32::from(b[0]) << 24)
@@ -73,14 +67,11 @@ pub fn bytes_to_four_u32(b: &[u8; 16]) -> [u32; 4] {
 /// Converts representation of 128-bit number from `[u32;8]` to blocks of `[u8;16]`.
 ///
 /// ## Example
-/// ```
-/// extern crate yogcrypt;
-/// use yogcrypt::basic::util::four_u32_to_bytes;
-///
+/// ``
 /// let u32_blocks = [1214606444, 1865162839, 1869769828, 556872243];
 /// let key = four_u32_to_bytes(&u32_blocks);
 /// assert_eq!(&key, b"Hello, World!123");
-/// ```
+/// ``
 pub fn four_u32_to_bytes(l: &[u32; 4]) -> [u8; 16] {
     [
         (l[0] >> 24) as u8,
