@@ -4,7 +4,6 @@ extern crate criterion;
 extern crate yogcrypt;
 
 use criterion::Criterion;
-use yogcrypt::basic::cell::u64x4::*;
 
 mod sm2_benches {
     use super::*;
@@ -101,83 +100,8 @@ mod sm4_benches {
 
 }
 
-mod ecc_group_benches {
-    use super::*;
-    use yogcrypt::basic::group::ecc_group::*;
-
-    fn bench_times(c: &mut Criterion) {
-        c.bench_function("ecc_group::times_point", move |b| {
-            b.iter_with_setup(
-                || U64x4::random(),
-                |r| {
-                    times_point(ECC_G, r);
-                },
-            )
-        });
-    }
-
-    fn bench_times_base(c: &mut Criterion) {
-        c.bench_function("ecc_group::times_base_point", move |b| {
-            b.iter_with_setup(
-                || U64x4::random(),
-                |r| {
-                    times_base_point(r);
-                },
-            )
-        });
-    }
-    criterion_group!(
-        benches,
-        ecc_group_benches::bench_times,
-        ecc_group_benches::bench_times_base
-    );
-}
-
-mod field_p_benches {
-    use super::*;
-    use yogcrypt::basic::field::field_p::*;
-
-    fn bench_mul(c: &mut Criterion) {
-        c.bench_function("field_p::mul", move |b| {
-            b.iter_with_setup(
-                || (FieldElement::random(), FieldElement::random()),
-                |(a, b)| a * b,
-            )
-        });
-    }
-
-    fn bench_inversion(c: &mut Criterion) {
-        c.bench_function("field_p::inv", move |b| {
-            b.iter_with_setup(
-                || FieldElement::random(),
-                |a| {
-                    get_mul_inv(a);
-                },
-            )
-        });
-    }
-
-    fn bench_add(c: &mut Criterion) {
-        c.bench_function("field_p:add", move |b| {
-            b.iter_with_setup(
-                || (FieldElement::random(), FieldElement::random()),
-                |(a, b)| a + b,
-            )
-        });
-    }
-
-    criterion_group!(
-        benches,
-        field_p_benches::bench_mul,
-        field_p_benches::bench_inversion,
-        field_p_benches::bench_add
-    );
-}
-
 criterion_main!(
     sm2_benches::benches,
     sm3_benches::benches,
     sm4_benches::benches,
-    ecc_group_benches::benches,
-    field_p_benches::benches
 );
