@@ -32,6 +32,16 @@ matrix:
         - cargo deadlinks --dir target/doc
       after_success:
         - travis-cargo --only nightly doc-upload
+      deploy:
+        provider: pages
+        local-dir: target/doc
+        skip-cleanup: true
+        verbose: true
+        repo: yogcrypt/doc
+        target-branch: master
+        github-token: $GH_TOKEN
+        on:
+          branch: master
     - rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu FMT=1 CLIPPY=1
       before_install:
