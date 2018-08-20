@@ -34,6 +34,7 @@ matrix:
         - travis-cargo --only nightly doc-upload
       deploy:
         provider: pages
+        fqdn: doc.yogcrypt.org
         local-dir: target/doc
         skip-cleanup: true
         verbose: true
