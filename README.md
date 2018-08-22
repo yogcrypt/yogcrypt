@@ -1,6 +1,7 @@
 # YogCrypt
 
 [![Build Status](https://travis-ci.com/yogcrypt/yogcrypt.svg?branch=master)](https://travis-ci.com/yogcrypt/yogcrypt)
+[![Documentation](https://img.shields.io/badge/docs-master-4F74A6.svg)](http://doc.yogcrypt.org)
 
 **A fast, general purpose crypto library in pure Rust.**
 
