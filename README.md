@@ -13,7 +13,7 @@ cryptographic hash algorithm, and the SM4 block cipher algorithm.
 
 ## Contributing
 
-YogCrypt is maintained by @liuwenling, @Messjer, and @mssun. Please see
+YogCrypt is maintained by @liuwenling, @Messjer, @romangol, and @mssun. Please see
 [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## License
