@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["BLOCK_SIZE",""],["KEY_SIZE",""],["RND_KEY_SIZE",""]],"fn":[["get_sm4_r_k","Compute round keys from a given key."],["sm4_dec","Decrypt `c_txt` using `sk`"],["sm4_dec_inner","Core function of sm4 decryption"],["sm4_enc","Encrypt `p_txt` under `sk`"],["sm4_enc_inner","Core function for sm4 encryption"]],"type":[["Block",""],["Key",""]]});
